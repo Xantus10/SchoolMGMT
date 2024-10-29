@@ -10,7 +10,7 @@ dbLocation = 'data/database.db'
 
 
 # Hash a password, returns salt,hash tuple
-def hashPassword(password: str):
+def hashPassword(password: str) -> tuple[str, str]:
   try:
     # Random salt
     salt = token_hex(32)
@@ -23,7 +23,7 @@ def hashPassword(password: str):
 
 
 # Check provided password, salt with a hash, returns bool
-def checkHashedPassword(password: str, salt: str, checkHash: str):
+def checkHashedPassword(password: str, salt: str, checkHash: str) -> bool:
   try:
     return sha256(bytes.fromhex(salt) + bytes(password, 'utf-8')).hexdigest() == checkHash
   except Exception as e:
@@ -66,24 +66,194 @@ def initialize():
   return True
 
 
+# Add a building with specified parameters
+def addBuilding(name: str, strIdentifier: str):
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    cursor.execute('INSERT INTO buildings(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a building; Error message: {e}; Data: {(name, strIdentifier)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a building; Error message: {e}')
+  db.commit()
+  return True
+
+def getAllBuildings() -> list[list[int, str, str]]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    building = cursor.execute('SELECT * FROM buildings;')
+    building = building.fetchall()
+    db.commit()
+    return building
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all buildings; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all buildings; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, name, strID]
+def getBuildingByName(name: str) -> list[int, str, str]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    building = cursor.execute('SELECT * FROM buildings WHERE name=?;', (name,))
+    building = building.fetchone()
+    db.commit()
+    if building:
+      return building
+    logger.log(f'Building was not found for name {name}', 2)
+    return []
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting a building; Error message: {e}; Data: {(name)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting a building; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, name, strID]
+def getBuildingById(buildingId: int) -> list[int, str, str]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    building = cursor.execute('SELECT * FROM buildings WHERE id=?;', (buildingId,))
+    building = building.fetchone()
+    db.commit()
+    if building:
+      return building
+    logger.log(f'Building was not found for id {buildingId}', 2)
+    return []
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting a building; Error message: {e}; Data: {(buildingId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting a building; Error message: {e}')
+  db.commit()
+  return True
 
 
 
+def addClassroom(number: int, capacity: int, buildingId: int):
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    cursor.execute('INSERT INTO classrooms(number, capacity, buildingId) VALUES(?, ?, ?);', (number, capacity, buildingId))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a classroom; Error message: {e}; Data: {(number, capacity, buildingId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a classroom; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, number, capacity]
+def getAllClassroomsForBuilding(buildingId: int) -> list[list[int, int, int]]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    classrooms = cursor.execute('SELECT * FROM classrooms WHERE buildingId=?;', (buildingId,))
+    classrooms = classrooms.fetchall()
+    db.commit()
+    return classrooms
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all classrooms; Error message: {e}; Data: {buildingId}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all classrooms; Error message: {e}')
+  db.commit()
+  return True
+
+def getClassroomId(number: int, buildingId: int) -> int:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    classrooms = cursor.execute('SELECT * FROM classrooms WHERE number=? AND buildingId=?;', (number, buildingId))
+    classrooms = classrooms.fetchone()
+    db.commit()
+    return classrooms
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting classroomId; Error message: {e}; Data: {(number, buildingId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting classroomId; Error message: {e}')
+  db.commit()
+  return True
 
 
 
+def addCourse(name: str, strId: str):
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    cursor.execute('INSERT INTO courses(name, strIdentifier) VALUES(?, ?);', (name, strId))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a course; Error message: {e}; Data: {(name, strId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a course; Error message: {e}')
+  db.commit()
+  return True
+
+def getAllCourses():
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    courses = cursor.execute('SELECT * FROM courses;')
+    courses = courses.fetchall()
+    db.commit()
+    return courses
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all courses; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all courses; Error message: {e}')
+  db.commit()
+  return True
 
 
 
+def addRole(role: str):
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    cursor.execute('INSERT INTO roles(role) VALUES(?);', (role,))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a role; Error message: {e}; Data: {(role)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a role; Error message: {e}')
+  db.commit()
+  return True
+
+def getAllRoles():
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    roles = cursor.execute('SELECT * FROM roles;')
+    roles = roles.fetchall()
+    db.commit()
+    return roles
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all roles; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all roles; Error message: {e}')
+  db.commit()
+  return True
 
 
 
-
-
-
-
-
-
+def addPerson(birthNumber: int, roleId: int, firstName: int, lastName: int):
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    cursor.execute('INSERT OR IGNORE INTO names(name) VALUES(?)', (firstName,))
+    cursor.execute('INSERT OR IGNORE INTO names(name) VALUES(?)', (lastName,))
+    fnId = cursor.execute('SELECT id FROM names WHERE name=?', (firstName,))
+    fnId = fnId.fetchone()[0]
+    lnId = cursor.execute('SELECT id FROM names WHERE name=?', (lastName,))
+    lnId = lnId.fetchone()[0]
+    cursor.execute('INSERT INTO people(birthNumber, roleId, firstNameId, lastNameId) VALUES(?, ?, ?, ?)', (birthNumber, roleId, fnId, lnId))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a person; Error message: {e}; Data: {(birthNumber, roleId, firstName, lastName)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a person; Error message: {e}')
+  db.commit()
+  return True
 
 
 
@@ -170,6 +340,3 @@ def removeUser(ix):
     logger.log(f'An unexpected error occurred while removing a user; Error message: {e}')
   db.commit()
   return True
-
-
-initialize()
