@@ -42,7 +42,7 @@ def initialize():
     cursor.execute('CREATE TABLE IF NOT EXISTS roles(id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS names(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS people(id INTEGER PRIMARY KEY AUTOINCREMENT, birthNumber INTEGER NOT NULL UNIQUE, roleId INTEGER NOT NULL, firstNameId INTEGER NOT NULL, lastNameId INTEGER NOT NULL, CONSTRAINT FK_people_roleId FOREIGN KEY (roleId) REFERENCES roles(id), CONSTRAINT FK_people_firstNameId FOREIGN KEY (firstNameId) REFERENCES names(id), CONSTRAINT FK_people_lastNameId FOREIGN KEY (lastNameId) REFERENCES names(id));')
-    cursor.execute('CREATE TABLE IF NOT EXISTS accounts(personId INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, salt TEXT NOT NULL, password TEXT NOT NULL, CONSTRAINT FK_accounts_personId FOREIGN KEY (personId) REFERENCES people(id));')
+    cursor.execute('CREATE TABLE IF NOT EXISTS accounts(personId INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, salt TEXT NOT NULL, password TEXT NOT NULL, disabled INTEGER, CONSTRAINT FK_accounts_personId FOREIGN KEY (personId) REFERENCES people(id), CONSTRAINT CH_accounts_disabled CHECK (disabled IS NULL OR disabled=1));')
     cursor.execute('CREATE TABLE IF NOT EXISTS employees(personId INTEGER PRIMARY KEY, supervisorId INTEGER, CONSTRAINT FK_employees_personId FOREIGN KEY(personId) REFERENCES people(id), CONSTRAINT FK_employees_supervisorId FOREIGN KEY (supervisorId) REFERENCES employees(id), CONSTRAINT CH_employees_supervisorId CHECK (supervisorId!=personId));')
     cursor.execute('CREATE TABLE IF NOT EXISTS teachers(personId INTEGER EGER PRIMARY KEY, strIdentifier TEXT NOT NULL UNIQUE, teachingFrom DATE NOT NULL, CONSTRAINT FK_teachers_personId FOREIGN KEY(personId) REFERENCES employees(personId));')
     cursor.execute('CREATE TABLE IF NOT EXISTS classes(id INTEGER PRIMARY KEY AUTOINCREMENT, startDate DATE NOT NULL, groupNumber INTEGER, rootClassroomId INTEGER NOT NULL UNIQUE, courseId INTEGER NOT NULL, classTeacherId INTEGER NOT NULL, CONSTRAINT FK_classes_rootClassroomId FOREIGN KEY (rootClassroomId) REFERENCES classrooms(id), CONSTRAINT FK_classes_courseId FOREIGN KEY (courseId) REFERENCES courses(id), CONSTRAINT FK_classes_classTeacherId FOREIGN KEY (classTeacherId) REFERENCES teachers(personId), CONSTRAINT U_classes_startDate_courseId_groupNumber UNIQUE (startDate, courseId, groupNumber), CONSTRAINT CH_classes_groupNumber CHECK (groupNumber=1 OR groupNumber=2 OR groupNumber IS NULL));')
@@ -92,7 +92,7 @@ def getAllBuildings() -> list[list[int, str, str]]:
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all buildings; Error message: {e}')
   db.commit()
-  return True
+  return []
 
 # [id, name, strID]
 def getBuildingByName(name: str) -> list[int, str, str]:
@@ -111,7 +111,7 @@ def getBuildingByName(name: str) -> list[int, str, str]:
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting a building; Error message: {e}')
   db.commit()
-  return True
+  return []
 
 # [id, name, strID]
 def getBuildingById(buildingId: int) -> list[int, str, str]:
@@ -130,7 +130,7 @@ def getBuildingById(buildingId: int) -> list[int, str, str]:
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting a building; Error message: {e}')
   db.commit()
-  return True
+  return []
 
 
 
@@ -160,7 +160,7 @@ def getAllClassroomsForBuilding(buildingId: int) -> list[list[int, int, int]]:
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all classrooms; Error message: {e}')
   db.commit()
-  return True
+  return []
 
 def getClassroomId(number: int, buildingId: int) -> int:
   try:
@@ -175,7 +175,7 @@ def getClassroomId(number: int, buildingId: int) -> int:
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting classroomId; Error message: {e}')
   db.commit()
-  return True
+  return []
 
 
 
@@ -204,7 +204,7 @@ def getAllCourses():
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all courses; Error message: {e}')
   db.commit()
-  return True
+  return []
 
 
 
@@ -233,11 +233,11 @@ def getAllRoles():
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all roles; Error message: {e}')
   db.commit()
-  return True
+  return []
 
 
 
-def addPerson(birthNumber: int, roleId: int, firstName: int, lastName: int):
+def addPerson(birthNumber: int, roleId: int, firstName: str, lastName: str):
   try:
     db = sqlite3.connect(dbLocation)
     cursor = db.cursor()
@@ -255,6 +255,99 @@ def addPerson(birthNumber: int, roleId: int, firstName: int, lastName: int):
   db.commit()
   return True
 
+# [id, role, fname, lname]
+def getPersonByBirthNumber(birthNumber: int) -> list[int, str, str, str]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    person = cursor.execute('''SELECT people.id, roles.role, fn.name, ln.name FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN roles ON roles.id=people.roleId
+                                                WHERE people.birthNumber=?;''', (birthNumber,))
+    person = person.fetchone()
+    db.commit()
+    return person
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {birthNumber}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+  db.commit()
+  return []
+
+# [birthNumber, role, fname, lname]
+def getPersonById(pid: int) -> list[int, str, str, str]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    person = cursor.execute('''SELECT people.birthNumber, roles.role, fn.name, ln.name FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN roles ON roles.id=people.roleId
+                                                WHERE people.id=?;''', (pid,))
+    person = person.fetchone()
+    db.commit()
+    return person
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {pid}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+  db.commit()
+  return []
+
+# [id, birthNumber, role, fname, lname]
+def getAllPeopleWithName(firstName='', lastName='') -> list[list[int, int, str, str, str]]:
+  try:
+    if not firstName and not lastName: return []
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    data = ()
+    if firstName and lastName:
+      data = (firstName, lastName)
+    else:
+      data = (firstName,) if firstName else (lastName,)
+    person = cursor.execute(f'''SELECT people.id, people.birthNumber, roles.role, fn.name, ln.name FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN roles ON roles.id=people.roleId
+                                                WHERE {"fn.name=?" if firstName else ""} {"AND" if firstName and lastName else ""} {"ln.name=?" if lastName else ""};''', data)
+    person = person.fetchall()
+    db.commit()
+    return person
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {firstName, lastName}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+  db.commit()
+  return []
+
+# [id, birthNumber, fname, lname]
+def getAllPeopleWithRole(role: str) -> list[list[int, int, str, str]]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    person = cursor.execute('''SELECT people.id, people.birthNumber, fn.name, ln.name FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN roles ON roles.id=people.roleId
+                                                WHERE roles.role=?;''', (role,))
+    person = person.fetchall()
+    db.commit()
+    return person
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {role}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+  db.commit()
+  return []
+
+
+
+
+
+
+
+
 
 
 
@@ -264,10 +357,14 @@ def logInUser(username, password):
     db = sqlite3.connect(dbLocation)
     cursor = db.cursor()
     # Get id, salt and password of a username
-    account = cursor.execute('SELECT id, salt, password FROM accounts WHERE username = ?;', (username,))
+    account = cursor.execute('SELECT id, salt, password, disabled FROM accounts WHERE username = ?;', (username,))
     account = account.fetchone()
+    db.commit()
     # Check if the username exists
     if account:
+      # Check if the account is disabled
+      if account[3] == 1:
+        return -1
       # Check if the password is right
       if (checkHashedPassword(password, account[1], account[2])):
         return account[0]
@@ -340,3 +437,12 @@ def removeUser(ix):
     logger.log(f'An unexpected error occurred while removing a user; Error message: {e}')
   db.commit()
   return True
+
+initialize()
+addRole('Student')
+addRole('Teacher')
+addPerson(123, 1, 'jarda', 'pravda')
+addPerson(124, 2, 'mike', 'pravda')
+addPerson(125, 1, 'mike', 'lost')
+addPerson(126, 2, 'jarda', 'pravda')
+print(getAllPeopleWithRole('Student'), getAllPeopleWithRole('Teacher'), getAllPeopleWithRole('janitor'), sep='\n')
