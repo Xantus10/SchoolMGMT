@@ -1,3 +1,4 @@
+import datetime
 import sqlite3
 from hashlib import sha256
 from secrets import token_hex
@@ -342,8 +343,140 @@ def getAllPeopleWithRole(role: str) -> list[list[int, int, str, str]]:
   return []
 
 
+def addAccount(personId, username, password):
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    # Hash the password
+    salt, hashed = hashPassword(password)
+    # Data for INSERT
+    data = (personId, username, salt, hashed)
+    # INSERT into accounts table
+    cursor.execute('INSERT INTO accounts(personId, username, salt, password) VALUES(?, ?, ?, ?);', data)
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a user; Error message: {e}; Data: {(personId, username, salt, password)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a user; Error message: {e}')
+  db.commit()
+  return True
+
+def getAccountInfoById(personId: int) -> list[str, bool]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    account = cursor.execute('SELECT username, disabled FROM accounts WHERE personId=?;', (personId,))
+    account = list(account.fetchone())
+    db.commit()
+    if account: account[1] = bool(account[1])
+    return account
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting account; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting account; Error message: {e}')
+  db.commit()
+  return []
 
 
+# Check if inserting the row with specified pid and sid will cause a loop where pid is super of sid and sid is super of pid
+def checkForSupervisorLoop(personId: int, supervisorId: int) -> bool:
+  try:
+      db = sqlite3.connect(dbLocation)
+      cursor = db.cursor()
+      # Get supervisor
+      sup = cursor.execute('SELECT * FROM employees WHERE personId=?', (supervisorId,))
+      sup = sup.fetchone()
+      db.commit()
+      if sup: return sup[1] == personId
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while checking supervisor loops; Error message: {e}; Data: {(personId, supervisorId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while checking supervisor loops; Error message: {e}')
+  db.commit()
+  return True
+
+def addEmployee(personId: int, supervisorId=None):
+  try:
+      db = sqlite3.connect(dbLocation)
+      cursor = db.cursor()
+      cursor.execute('INSERT INTO employees(personId, supervisorId) VALUES(?, ?);', (personId, supervisorId))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding an employee; Error message: {e}; Data: {(personId, supervisorId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding an employee; Error message: {e}')
+  db.commit()
+  return True
+
+def getEmployeeById(personId: int) -> list[int, int]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    emp = cursor.execute('SELECT * FROM employees WHERE;')
+    emp = emp.fetchall()
+    db.commit()
+    return emp
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting employee; Error message: {e}; Data: {personId};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting employee; Error message: {e}')
+  db.commit()
+  return []
+
+# [id, role, fname, lname]
+def getAllEmployeesWithSupervisor(supervisorId: int) -> list[int, str, str, str]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    person = cursor.execute('''SELECT people.id, roles.role, fn.name, ln.name FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN roles ON roles.id=people.roleId
+                                                JOIN employees ON employees.personId=people.id
+                                                WHERE employees.supervisorId=?;''', (supervisorId,))
+    person = person.fetchall()
+    db.commit()
+    return person
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {supervisorId}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+  db.commit()
+  return []
+
+
+def addTeacher(personId: int, teachingFrom: datetime.date, strIdentifier: str):
+  try:
+      db = sqlite3.connect(dbLocation)
+      cursor = db.cursor()
+      cursor.execute('INSERT INTO teachers(personId, teachingFrom, strIdentifier) VALUES(?, ?, ?);', (personId, teachingFrom, strIdentifier))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a teacher; Error message: {e}; Data: {(personId, teachingFrom, strIdentifier)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a teacher; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, fname, lname, strID, teachFrom]
+def getAllTeachers() -> list[int, str, str, str, datetime.datetime]:
+  try:
+    db = sqlite3.connect(dbLocation)
+    cursor = db.cursor()
+    teachers = cursor.execute('''SELECT people.id, fn.name, ln.name, teachers.strIdentifier, teachers.teachingFrom FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN roles ON roles.id=people.roleId
+                                                JOIN teachers ON teachers.personId=people.id''')
+    teachers = teachers.fetchall()
+    db.commit()
+    for i, teacher in enumerate(teachers):
+      teachers[i] = list(teacher)
+      teachers[i][-1] = datetime.datetime.strptime(teachers[i][-1], '%Y-%m-%d')
+    return teachers
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all teachers; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all teachers; Error message: {e}')
+  db.commit()
+  return []
 
 
 
@@ -400,24 +533,6 @@ def checkIfUsernameExists(username):
   return True
 
 
-def addUser(username, password):
-  try:
-    db = sqlite3.connect(dbLocation)
-    cursor = db.cursor()
-    # Hash the password
-    salt, hashed = hashPassword(password)
-    # Data for INSERT
-    data = (username, salt, hashed)
-    # INSERT into accounts table
-    cursor.execute('INSERT INTO accounts(username, salt, password) VALUES(?, ?, ?);', data)
-  except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a user; Error message: {e}; Data: {(username, salt, password)}')
-  except Exception as e:
-    logger.log(f'An unexpected error occurred while adding a user; Error message: {e}')
-  db.commit()
-  return True
-
-
 # Remove a user
 def removeUser(ix):
   try:
@@ -437,12 +552,3 @@ def removeUser(ix):
     logger.log(f'An unexpected error occurred while removing a user; Error message: {e}')
   db.commit()
   return True
-
-initialize()
-addRole('Student')
-addRole('Teacher')
-addPerson(123, 1, 'jarda', 'pravda')
-addPerson(124, 2, 'mike', 'pravda')
-addPerson(125, 1, 'mike', 'lost')
-addPerson(126, 2, 'jarda', 'pravda')
-print(getAllPeopleWithRole('Student'), getAllPeopleWithRole('Teacher'), getAllPeopleWithRole('janitor'), sep='\n')
