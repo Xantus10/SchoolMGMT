@@ -50,9 +50,9 @@ def initialize():
     cursor.execute('CREATE TABLE IF NOT EXISTS people(id INTEGER PRIMARY KEY AUTOINCREMENT, birthNumber INTEGER NOT NULL UNIQUE, roleId INTEGER NOT NULL, firstNameId INTEGER NOT NULL, lastNameId INTEGER NOT NULL, CONSTRAINT FK_people_roleId FOREIGN KEY (roleId) REFERENCES roles(id), CONSTRAINT FK_people_firstNameId FOREIGN KEY (firstNameId) REFERENCES names(id), CONSTRAINT FK_people_lastNameId FOREIGN KEY (lastNameId) REFERENCES names(id));')
     cursor.execute('CREATE TABLE IF NOT EXISTS accounts(personId INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, salt TEXT NOT NULL, password TEXT NOT NULL, disabled INTEGER, CONSTRAINT FK_accounts_personId FOREIGN KEY (personId) REFERENCES people(id), CONSTRAINT CH_accounts_disabled CHECK (disabled IS NULL OR disabled=1));')
     cursor.execute('CREATE TABLE IF NOT EXISTS employees(personId INTEGER PRIMARY KEY, supervisorId INTEGER, CONSTRAINT FK_employees_personId FOREIGN KEY(personId) REFERENCES people(id), CONSTRAINT FK_employees_supervisorId FOREIGN KEY (supervisorId) REFERENCES employees(personId), CONSTRAINT CH_employees_supervisorId CHECK (supervisorId!=personId));')
-    cursor.execute('CREATE TABLE IF NOT EXISTS teachers(personId INTEGER EGER PRIMARY KEY, strIdentifier TEXT NOT NULL UNIQUE, teachingFrom DATE NOT NULL, CONSTRAINT FK_teachers_personId FOREIGN KEY(personId) REFERENCES employees(personId));')
+    cursor.execute('CREATE TABLE IF NOT EXISTS teachers(personId INTEGER EGER PRIMARY KEY, strIdentifier TEXT NOT NULL UNIQUE, teachingFrom DATE NOT NULL, CONSTRAINT FK_teachers_personId FOREIGN KEY (personId) REFERENCES employees(personId));')
     cursor.execute('CREATE TABLE IF NOT EXISTS classes(id INTEGER PRIMARY KEY AUTOINCREMENT, startYear INTEGER NOT NULL, groupNumber INTEGER, rootClassroomId INTEGER NOT NULL UNIQUE, courseId INTEGER NOT NULL, classTeacherId INTEGER NOT NULL, CONSTRAINT FK_classes_rootClassroomId FOREIGN KEY (rootClassroomId) REFERENCES classrooms(id), CONSTRAINT FK_classes_courseId FOREIGN KEY (courseId) REFERENCES courses(id), CONSTRAINT FK_classes_classTeacherId FOREIGN KEY (classTeacherId) REFERENCES teachers(personId), CONSTRAINT U_classes_startYear_courseId_groupNumber UNIQUE (startYear, courseId, groupNumber), CONSTRAINT CH_classes_groupNumber_startYear CHECK ((groupNumber=1 OR groupNumber=2 OR groupNumber IS NULL) AND (startYear>2000 AND startYear<=9999)));')
-    cursor.execute('CREATE TABLE IF NOT EXISTS students(personId INTEGER PRIMARY KEY, classId INTEGER NOT NULL, half TEXT NOT NULL, CONSTRAINT FK_students_personId FOREIGN KEY(personId) REFERENCES people(personId), CONSTRAINT FK_students_classId FOREIGN KEY (classId) REFERENCES classes(id), CONSTRAINT CH_students_half CHECK (half=\'A\' OR half=\'B\'));')
+    cursor.execute('CREATE TABLE IF NOT EXISTS students(personId INTEGER PRIMARY KEY, classId INTEGER NOT NULL, half TEXT NOT NULL, CONSTRAINT FK_students_personId FOREIGN KEY (personId) REFERENCES people(id), CONSTRAINT FK_students_classId FOREIGN KEY (classId) REFERENCES classes(id), CONSTRAINT CH_students_half CHECK (half=\'A\' OR half=\'B\'));')
     cursor.execute('CREATE TABLE IF NOT EXISTS subjects(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, strIdentifier TEXT NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS teachersSubjectsExpertise(teacherId INTEGER, subjectId INTEGER, CONSTRAINT PK_teachersSubjectsExpertise PRIMARY KEY (teacherId, subjectId), CONSTRAINT FK_teachersSubjectsExpertise_teacherId FOREIGN KEY (teacherId) REFERENCES teachers(personId), CONSTRAINT FK_teachersSubjectsExpertise_subjectId FOREIGN KEY (subjectId) REFERENCES subjects(id));')
     cursor.execute('CREATE TABLE IF NOT EXISTS daysInWeek(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE);')
@@ -531,6 +531,141 @@ def getAllClassesWithTeacher(classTeacherId: int) -> list[int, str, int, int, in
     logger.log(f'An unexpected error occurred while getting all classes; Error message: {e}')
   db.commit()
   return []
+
+
+
+def addStudent(personId: int, classId: int, half: str):
+  try:
+      db = getDBConn()
+      cursor = db.cursor()
+      cursor.execute('INSERT INTO students(personId, classId, half) VALUES(?, ?, ?);', (personId, classId, half))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a student; Error message: {e}; Data: {(personId, classId, half)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a student; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, fname, lname, half]
+def getAllStudentsWithClassHalf(classId: int, half: str=None) -> list[int, str, str, str]:
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    data = (classId, half) if half else (classId,)
+    students = cursor.execute(f'''SELECT people.id, fn.name, ln.name, students.half FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN students ON students.personId=people.id
+                                                WHERE students.classId=?{" AND students.half=?" if half else ""};''', data)
+    students = students.fetchall()
+    db.commit()
+    return students
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all students; Error message: {e}; Data: {(classId, half)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all students; Error message: {e}')
+  db.commit()
+  return []
+
+
+
+def addSubject(name: str, strIdentifier: str):
+  try:
+      db = getDBConn()
+      cursor = db.cursor()
+      cursor.execute('INSERT INTO subjects(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a subject; Error message: {e}; Data: {(name, strIdentifier)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a subject; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, name, strID]
+def getAllSubjects() -> list[int, str, str]:
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    subjects = cursor.execute('SELECT * FROM subjects;')
+    subjects = subjects.fetchall()
+    db.commit()
+    return subjects
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all subjects; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all subjects; Error message: {e}')
+  db.commit()
+  return []
+
+
+
+def addTeacherSubjectExpertise(teacherId: int, subjectId: int):
+  try:
+      db = getDBConn()
+      cursor = db.cursor()
+      cursor.execute('INSERT INTO teachersSubjectsExpertise(teacherId, subjectId) VALUES(?, ?);', (teacherId, subjectId))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a teacher subject; Error message: {e}; Data: {(teacherId, subjectId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a teacher subject; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, strID]
+def getAllExpertiseWithTeacher(teacherId: int) -> list[int, str]:
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    expertise = cursor.execute('''SELECT subjects.id, subjects.strIdentifier FROM teachersSubjectsExpertise
+                                                JOIN subjects ON teachersSubjectsExpertise.subjectId=subjects.id
+                                                WHERE teachersSubjectsExpertise.teacherId=?''', (teacherId,))
+    expertise = expertise.fetchall()
+    db.commit()
+    return expertise
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all expertise(t); Error message: {e}; Data: {(teacherId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all expertise(t); Error message: {e}')
+  db.commit()
+  return []
+
+# [id, strID]
+def getAllExpertiseWithSubject(subjectId: int) -> list[int, str]:
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    expertise = cursor.execute('''SELECT teachers.personId, teachers.strIdentifier FROM teachersSubjectsExpertise
+                                                JOIN teachers ON teachers.personId=teachersSubjectsExpertise.teacherId
+                                                WHERE teachersSubjectsExpertise.subjectId=?;''', (subjectId,))
+    expertise = expertise.fetchall()
+    db.commit()
+    return expertise
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all expertise(s); Error message: {e}; Data: {(subjectId)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all expertise(s); Error message: {e}')
+  db.commit()
+  return []
+
+
+
+def initializeDaysInWeek():
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    for d in days:
+      cursor.execute('INSERT OR IGNORE INTO daysInWeek(name) VALUES(?)', (d,))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while initializing daysInWeek; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while initializing daysInWeek; Error message: {e}')
+  db.commit()
+  return True
+
+
+
+
 
 
 
