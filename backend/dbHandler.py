@@ -9,6 +9,11 @@ logger = Logger()
 
 dbLocation = 'data/database.db'
 
+def getDBConn():
+  dbc = sqlite3.connect(dbLocation)
+  dbc.execute('PRAGMA foreign_keys = ON;')
+  return dbc
+
 
 # Hash a password, returns salt,hash tuple
 def hashPassword(password: str) -> tuple[str, str]:
@@ -35,7 +40,7 @@ def checkHashedPassword(password: str, salt: str, checkHash: str) -> bool:
 # Initialize all database tables
 def initialize():
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     cursor.execute('CREATE TABLE IF NOT EXISTS buildings(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, strIdentifier  NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS classrooms(id INTEGER PRIMARY KEY AUTOINCREMENT, number INTEGER NOT NULL, capacity INTEGER NOT NULL, buildingId INTEGER NOT NULL, CONSTRAINT FK_classrooms_buildingId FOREIGN KEY (buildingId) REFERENCES buildings(id), CONSTRAINT U_classrooms_number_buildingId UNIQUE (number, buildingId));')
@@ -44,9 +49,9 @@ def initialize():
     cursor.execute('CREATE TABLE IF NOT EXISTS names(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS people(id INTEGER PRIMARY KEY AUTOINCREMENT, birthNumber INTEGER NOT NULL UNIQUE, roleId INTEGER NOT NULL, firstNameId INTEGER NOT NULL, lastNameId INTEGER NOT NULL, CONSTRAINT FK_people_roleId FOREIGN KEY (roleId) REFERENCES roles(id), CONSTRAINT FK_people_firstNameId FOREIGN KEY (firstNameId) REFERENCES names(id), CONSTRAINT FK_people_lastNameId FOREIGN KEY (lastNameId) REFERENCES names(id));')
     cursor.execute('CREATE TABLE IF NOT EXISTS accounts(personId INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, salt TEXT NOT NULL, password TEXT NOT NULL, disabled INTEGER, CONSTRAINT FK_accounts_personId FOREIGN KEY (personId) REFERENCES people(id), CONSTRAINT CH_accounts_disabled CHECK (disabled IS NULL OR disabled=1));')
-    cursor.execute('CREATE TABLE IF NOT EXISTS employees(personId INTEGER PRIMARY KEY, supervisorId INTEGER, CONSTRAINT FK_employees_personId FOREIGN KEY(personId) REFERENCES people(id), CONSTRAINT FK_employees_supervisorId FOREIGN KEY (supervisorId) REFERENCES employees(id), CONSTRAINT CH_employees_supervisorId CHECK (supervisorId!=personId));')
+    cursor.execute('CREATE TABLE IF NOT EXISTS employees(personId INTEGER PRIMARY KEY, supervisorId INTEGER, CONSTRAINT FK_employees_personId FOREIGN KEY(personId) REFERENCES people(id), CONSTRAINT FK_employees_supervisorId FOREIGN KEY (supervisorId) REFERENCES employees(personId), CONSTRAINT CH_employees_supervisorId CHECK (supervisorId!=personId));')
     cursor.execute('CREATE TABLE IF NOT EXISTS teachers(personId INTEGER EGER PRIMARY KEY, strIdentifier TEXT NOT NULL UNIQUE, teachingFrom DATE NOT NULL, CONSTRAINT FK_teachers_personId FOREIGN KEY(personId) REFERENCES employees(personId));')
-    cursor.execute('CREATE TABLE IF NOT EXISTS classes(id INTEGER PRIMARY KEY AUTOINCREMENT, startDate DATE NOT NULL, groupNumber INTEGER, rootClassroomId INTEGER NOT NULL UNIQUE, courseId INTEGER NOT NULL, classTeacherId INTEGER NOT NULL, CONSTRAINT FK_classes_rootClassroomId FOREIGN KEY (rootClassroomId) REFERENCES classrooms(id), CONSTRAINT FK_classes_courseId FOREIGN KEY (courseId) REFERENCES courses(id), CONSTRAINT FK_classes_classTeacherId FOREIGN KEY (classTeacherId) REFERENCES teachers(personId), CONSTRAINT U_classes_startDate_courseId_groupNumber UNIQUE (startDate, courseId, groupNumber), CONSTRAINT CH_classes_groupNumber CHECK (groupNumber=1 OR groupNumber=2 OR groupNumber IS NULL));')
+    cursor.execute('CREATE TABLE IF NOT EXISTS classes(id INTEGER PRIMARY KEY AUTOINCREMENT, startYear INTEGER NOT NULL, groupNumber INTEGER, rootClassroomId INTEGER NOT NULL UNIQUE, courseId INTEGER NOT NULL, classTeacherId INTEGER NOT NULL, CONSTRAINT FK_classes_rootClassroomId FOREIGN KEY (rootClassroomId) REFERENCES classrooms(id), CONSTRAINT FK_classes_courseId FOREIGN KEY (courseId) REFERENCES courses(id), CONSTRAINT FK_classes_classTeacherId FOREIGN KEY (classTeacherId) REFERENCES teachers(personId), CONSTRAINT U_classes_startYear_courseId_groupNumber UNIQUE (startYear, courseId, groupNumber), CONSTRAINT CH_classes_groupNumber_startYear CHECK ((groupNumber=1 OR groupNumber=2 OR groupNumber IS NULL) AND (startYear>2000 AND startYear<=9999)));')
     cursor.execute('CREATE TABLE IF NOT EXISTS students(personId INTEGER PRIMARY KEY, classId INTEGER NOT NULL, half TEXT NOT NULL, CONSTRAINT FK_students_personId FOREIGN KEY(personId) REFERENCES people(personId), CONSTRAINT FK_students_classId FOREIGN KEY (classId) REFERENCES classes(id), CONSTRAINT CH_students_half CHECK (half=\'A\' OR half=\'B\'));')
     cursor.execute('CREATE TABLE IF NOT EXISTS subjects(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, strIdentifier TEXT NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS teachersSubjectsExpertise(teacherId INTEGER, subjectId INTEGER, CONSTRAINT PK_teachersSubjectsExpertise PRIMARY KEY (teacherId, subjectId), CONSTRAINT FK_teachersSubjectsExpertise_teacherId FOREIGN KEY (teacherId) REFERENCES teachers(personId), CONSTRAINT FK_teachersSubjectsExpertise_subjectId FOREIGN KEY (subjectId) REFERENCES subjects(id));')
@@ -70,7 +75,7 @@ def initialize():
 # Add a building with specified parameters
 def addBuilding(name: str, strIdentifier: str):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     cursor.execute('INSERT INTO buildings(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
   except sqlite3.Error as e:
@@ -82,7 +87,7 @@ def addBuilding(name: str, strIdentifier: str):
 
 def getAllBuildings() -> list[list[int, str, str]]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     building = cursor.execute('SELECT * FROM buildings;')
     building = building.fetchall()
@@ -98,7 +103,7 @@ def getAllBuildings() -> list[list[int, str, str]]:
 # [id, name, strID]
 def getBuildingByName(name: str) -> list[int, str, str]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     building = cursor.execute('SELECT * FROM buildings WHERE name=?;', (name,))
     building = building.fetchone()
@@ -117,7 +122,7 @@ def getBuildingByName(name: str) -> list[int, str, str]:
 # [id, name, strID]
 def getBuildingById(buildingId: int) -> list[int, str, str]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     building = cursor.execute('SELECT * FROM buildings WHERE id=?;', (buildingId,))
     building = building.fetchone()
@@ -137,7 +142,7 @@ def getBuildingById(buildingId: int) -> list[int, str, str]:
 
 def addClassroom(number: int, capacity: int, buildingId: int):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     cursor.execute('INSERT INTO classrooms(number, capacity, buildingId) VALUES(?, ?, ?);', (number, capacity, buildingId))
   except sqlite3.Error as e:
@@ -150,7 +155,7 @@ def addClassroom(number: int, capacity: int, buildingId: int):
 # [id, number, capacity]
 def getAllClassroomsForBuilding(buildingId: int) -> list[list[int, int, int]]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     classrooms = cursor.execute('SELECT * FROM classrooms WHERE buildingId=?;', (buildingId,))
     classrooms = classrooms.fetchall()
@@ -165,7 +170,7 @@ def getAllClassroomsForBuilding(buildingId: int) -> list[list[int, int, int]]:
 
 def getClassroomId(number: int, buildingId: int) -> int:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     classrooms = cursor.execute('SELECT * FROM classrooms WHERE number=? AND buildingId=?;', (number, buildingId))
     classrooms = classrooms.fetchone()
@@ -182,7 +187,7 @@ def getClassroomId(number: int, buildingId: int) -> int:
 
 def addCourse(name: str, strId: str):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     cursor.execute('INSERT INTO courses(name, strIdentifier) VALUES(?, ?);', (name, strId))
   except sqlite3.Error as e:
@@ -194,7 +199,7 @@ def addCourse(name: str, strId: str):
 
 def getAllCourses():
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     courses = cursor.execute('SELECT * FROM courses;')
     courses = courses.fetchall()
@@ -211,7 +216,7 @@ def getAllCourses():
 
 def addRole(role: str):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     cursor.execute('INSERT INTO roles(role) VALUES(?);', (role,))
   except sqlite3.Error as e:
@@ -223,7 +228,7 @@ def addRole(role: str):
 
 def getAllRoles():
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     roles = cursor.execute('SELECT * FROM roles;')
     roles = roles.fetchall()
@@ -240,7 +245,7 @@ def getAllRoles():
 
 def addPerson(birthNumber: int, roleId: int, firstName: str, lastName: str):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     cursor.execute('INSERT OR IGNORE INTO names(name) VALUES(?)', (firstName,))
     cursor.execute('INSERT OR IGNORE INTO names(name) VALUES(?)', (lastName,))
@@ -259,7 +264,7 @@ def addPerson(birthNumber: int, roleId: int, firstName: str, lastName: str):
 # [id, role, fname, lname]
 def getPersonByBirthNumber(birthNumber: int) -> list[int, str, str, str]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     person = cursor.execute('''SELECT people.id, roles.role, fn.name, ln.name FROM people
                                                 JOIN names fn ON fn.id=people.firstNameId
@@ -279,7 +284,7 @@ def getPersonByBirthNumber(birthNumber: int) -> list[int, str, str, str]:
 # [birthNumber, role, fname, lname]
 def getPersonById(pid: int) -> list[int, str, str, str]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     person = cursor.execute('''SELECT people.birthNumber, roles.role, fn.name, ln.name FROM people
                                                 JOIN names fn ON fn.id=people.firstNameId
@@ -297,10 +302,10 @@ def getPersonById(pid: int) -> list[int, str, str, str]:
   return []
 
 # [id, birthNumber, role, fname, lname]
-def getAllPeopleWithName(firstName='', lastName='') -> list[list[int, int, str, str, str]]:
+def getAllPeopleWithName(firstName: str='', lastName: str='') -> list[list[int, int, str, str, str]]:
   try:
     if not firstName and not lastName: return []
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     data = ()
     if firstName and lastName:
@@ -325,7 +330,7 @@ def getAllPeopleWithName(firstName='', lastName='') -> list[list[int, int, str, 
 # [id, birthNumber, fname, lname]
 def getAllPeopleWithRole(role: str) -> list[list[int, int, str, str]]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     person = cursor.execute('''SELECT people.id, people.birthNumber, fn.name, ln.name FROM people
                                                 JOIN names fn ON fn.id=people.firstNameId
@@ -343,9 +348,9 @@ def getAllPeopleWithRole(role: str) -> list[list[int, int, str, str]]:
   return []
 
 
-def addAccount(personId, username, password):
+def addAccount(personId: int, username: str, password: str):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     # Hash the password
     salt, hashed = hashPassword(password)
@@ -362,7 +367,7 @@ def addAccount(personId, username, password):
 
 def getAccountInfoById(personId: int) -> list[str, bool]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     account = cursor.execute('SELECT username, disabled FROM accounts WHERE personId=?;', (personId,))
     account = list(account.fetchone())
@@ -380,7 +385,7 @@ def getAccountInfoById(personId: int) -> list[str, bool]:
 # Check if inserting the row with specified pid and sid will cause a loop where pid is super of sid and sid is super of pid
 def checkForSupervisorLoop(personId: int, supervisorId: int) -> bool:
   try:
-      db = sqlite3.connect(dbLocation)
+      db = getDBConn()
       cursor = db.cursor()
       # Get supervisor
       sup = cursor.execute('SELECT * FROM employees WHERE personId=?', (supervisorId,))
@@ -394,9 +399,9 @@ def checkForSupervisorLoop(personId: int, supervisorId: int) -> bool:
   db.commit()
   return True
 
-def addEmployee(personId: int, supervisorId=None):
+def addEmployee(personId: int, supervisorId: int=None):
   try:
-      db = sqlite3.connect(dbLocation)
+      db = getDBConn()
       cursor = db.cursor()
       cursor.execute('INSERT INTO employees(personId, supervisorId) VALUES(?, ?);', (personId, supervisorId))
   except sqlite3.Error as e:
@@ -408,7 +413,7 @@ def addEmployee(personId: int, supervisorId=None):
 
 def getEmployeeById(personId: int) -> list[int, int]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     emp = cursor.execute('SELECT * FROM employees WHERE;')
     emp = emp.fetchall()
@@ -424,7 +429,7 @@ def getEmployeeById(personId: int) -> list[int, int]:
 # [id, role, fname, lname]
 def getAllEmployeesWithSupervisor(supervisorId: int) -> list[int, str, str, str]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     person = cursor.execute('''SELECT people.id, roles.role, fn.name, ln.name FROM people
                                                 JOIN names fn ON fn.id=people.firstNameId
@@ -445,7 +450,7 @@ def getAllEmployeesWithSupervisor(supervisorId: int) -> list[int, str, str, str]
 
 def addTeacher(personId: int, teachingFrom: datetime.date, strIdentifier: str):
   try:
-      db = sqlite3.connect(dbLocation)
+      db = getDBConn()
       cursor = db.cursor()
       cursor.execute('INSERT INTO teachers(personId, teachingFrom, strIdentifier) VALUES(?, ?, ?);', (personId, teachingFrom, strIdentifier))
   except sqlite3.Error as e:
@@ -458,13 +463,13 @@ def addTeacher(personId: int, teachingFrom: datetime.date, strIdentifier: str):
 # [id, fname, lname, strID, teachFrom]
 def getAllTeachers() -> list[int, str, str, str, datetime.datetime]:
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     teachers = cursor.execute('''SELECT people.id, fn.name, ln.name, teachers.strIdentifier, teachers.teachingFrom FROM people
                                                 JOIN names fn ON fn.id=people.firstNameId
                                                 JOIN names ln ON ln.id=people.lastNameId
                                                 JOIN roles ON roles.id=people.roleId
-                                                JOIN teachers ON teachers.personId=people.id''')
+                                                JOIN teachers ON teachers.personId=people.id;''')
     teachers = teachers.fetchall()
     db.commit()
     for i, teacher in enumerate(teachers):
@@ -480,6 +485,60 @@ def getAllTeachers() -> list[int, str, str, str, datetime.datetime]:
 
 
 
+def addClass(courseId: int, startYear: int, rootClassroomId: int, classTeacherId: int, groupNumber: int=None):
+  try:
+      db = getDBConn()
+      cursor = db.cursor()
+      cursor.execute('INSERT INTO classes(startYear, rootClassroomId, courseId, classTeacherId, groupNumber) VALUES(?, ?, ?, ?, ?);', (startYear, rootClassroomId, courseId, classTeacherId, groupNumber))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a class; Error message: {e}; Data: {(startYear, rootClassroomId, courseId, classTeacherId, groupNumber)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a class; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, courseStrID, startYear, groupNumber, classTeacherId, rootClassroomId]
+def getAllClasses() -> list[int, str, int, int, int, int]:
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    classes = cursor.execute('''SELECT classes.id, courses.strIdentifier, classes.startYear, classes.groupNumber, classes.classTeacherId, classes.rootClassroomId FROM classes
+                                                JOIN courses ON courses.id=classes.courseId;''')
+    classes = classes.fetchall()
+    db.commit()
+    return classes
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all classes; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all classes; Error message: {e}')
+  db.commit()
+  return []
+
+# [id, courseStrID, startYear, groupNumber, rootClassroomId]
+def getAllClassesWithTeacher(classTeacherId: int) -> list[int, str, int, int, int]:
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    classes = cursor.execute('''SELECT classes.id, courses.strIdentifier, classes.startYear, classes.groupNumber, classes.rootClassroomId FROM classes
+                                                JOIN courses ON courses.id=classes.courseId
+                                                WHERE classes.classTeacherId=?;''', (classTeacherId,))
+    classes = classes.fetchall()
+    db.commit()
+    return classes
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all classes; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all classes; Error message: {e}')
+  db.commit()
+  return []
+
+
+
+
+
+
+
+
 
 
 
@@ -487,7 +546,7 @@ def getAllTeachers() -> list[int, str, str, str, datetime.datetime]:
 # Log in a user; returns id (if fail -> id = -1)
 def logInUser(username, password):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     # Get id, salt and password of a username
     account = cursor.execute('SELECT id, salt, password, disabled FROM accounts WHERE username = ?;', (username,))
@@ -516,7 +575,7 @@ def logInUser(username, password):
 # Return True if Username was found in table
 def checkIfUsernameExists(username):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     # If username is in accounts
     res1 = cursor.execute('SELECT * FROM accounts WHERE username = ?;', (username,))
@@ -536,7 +595,7 @@ def checkIfUsernameExists(username):
 # Remove a user
 def removeUser(ix):
   try:
-    db = sqlite3.connect(dbLocation)
+    db = getDBConn()
     cursor = db.cursor()
     # Find a user
     user = cursor.execute('SELECT username FROM accounts WHERE id = ?;', (ix,))
