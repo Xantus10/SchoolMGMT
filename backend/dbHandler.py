@@ -58,7 +58,7 @@ def initialize():
     cursor.execute('CREATE TABLE IF NOT EXISTS daysInWeek(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS lectureTimes(id INTEGER PRIMARY KEY, startTime TIME NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS lectures(id INTEGER PRIMARY KEY AUTOINCREMENT, isEvenWeek INTEGER NOT NULL, dayId INTEGER NOT NULL, timeId INTEGER NOT NULL, CONSTRAINT FK_lectures_dayId FOREIGN KEY (dayId) REFERENCES daysInWeek(id), CONSTRAINT FK_lectures_timeId FOREIGN KEY (timeId) REFERENCES lectureTimes(id), CONSTRAINT U_lectures_all UNIQUE (isEvenWeek, dayId, timeId), CONSTRAINT CH_lectures_isEvenWeek CHECK (isEvenWeek=0 OR isEvenWeek=1));')
-    cursor.execute('CREATE TABLE IF NOT EXISTS schedules(id INTEGER PRIMARY KEY AUTOINCREMENT, lectureId INTEGER NOT NULL, classId INTEGER NOT NULL, teacherId INTEGER NOT NULL, subjectId INTEGER NOT NULL, fullOrAB TEXT NOT NULL, classroomId INTEGER NOT NULL, CONSTRAINT FK_schedules_lectureId FOREIGN KEY (lectureId) REFERENCES lectures(id), CONSTRAINT FK_schedules_classId FOREIGN KEY (classId) REFERENCES classes(id), CONSTRAINT FK_schedules_teacherId FOREIGN KEY (teacherId) REFERENCES teachersSubjectsExpertise(teacherId), CONSTRAINT FK_schedules_subjectId FOREIGN KEY (subjectId) REFERENCES teachersSubjectsExpertise(subjectId), CONSTRAINT FK_schedules_classroomId FOREIGN KEY (classroomId) REFERENCES classrooms(id), CONSTRAINT U_schedules_lectureId_classId_fullOrAB UNIQUE(lectureId, classId, fullOrAB), CONSTRAINT U_schedules_lectureId_teacherId UNIQUE(lectureId, teacherId), CONSTRAINT U_schedules_lectureId_classroomId UNIQUE(lectureId, classroomId), CONSTRAINT CH_schedules_fullOrAB CHECK (fullOrAB=\'A\' OR fullOrAB=\'B\' OR fullOrAB=\'F\'));')
+    cursor.execute('CREATE TABLE IF NOT EXISTS schedules(id INTEGER PRIMARY KEY AUTOINCREMENT, lectureId INTEGER NOT NULL, classId INTEGER NOT NULL, teacherId INTEGER NOT NULL, subjectId INTEGER NOT NULL, fullOrAB TEXT NOT NULL, classroomId INTEGER NOT NULL, CONSTRAINT FK_schedules_lectureId FOREIGN KEY (lectureId) REFERENCES lectures(id), CONSTRAINT FK_schedules_classId FOREIGN KEY (classId) REFERENCES classes(id), CONSTRAINT FK_schedules_teachersubjectId FOREIGN KEY (teacherId, subjectId) REFERENCES teachersSubjectsExpertise(teacherId, subjectId), CONSTRAINT FK_schedules_classroomId FOREIGN KEY (classroomId) REFERENCES classrooms(id), CONSTRAINT U_schedules_lectureId_classId_fullOrAB UNIQUE(lectureId, classId, fullOrAB), CONSTRAINT U_schedules_lectureId_teacherId UNIQUE(lectureId, teacherId), CONSTRAINT U_schedules_lectureId_classroomId UNIQUE(lectureId, classroomId), CONSTRAINT CH_schedules_fullOrAB CHECK (fullOrAB=\'A\' OR fullOrAB=\'B\' OR fullOrAB=\'F\'));')
     cursor.execute('CREATE TABLE IF NOT EXISTS marksTitles(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS classification(id INTEGER PRIMARY KEY AUTOINCREMENT, mark REAL NOT NULL, weight INTEGER NOT NULL, teacherId INTEGER NOT NULL, subjectId INTEGER NOT NULL, studentId INTEGER NOT NULL, date DATE NOT NULL, titleId INTEGER NOT NULL, comment TEXT, CONSTRAINT FK_classification_teacherId FOREIGN KEY (teacherId) REFERENCES teachersSubjectsExpertise(teacherId), CONSTRAINT FK_classification_subjectId FOREIGN KEY (subjectId) REFERENCES teachersSubjectsExpertise(subjectId), CONSTRAINT FK_classification_studentId FOREIGN KEY (studentId) REFERENCES students(personId), CONSTRAINT FK_classification_titleId FOREIGN KEY (titleId) REFERENCES marksTitles(id), CONSTRAINT U_classification_studentId_date_titleId UNIQUE (studentId, date, titleId), CONSTRAINT CH_classification_mark_weight CHECK (mark>=1 AND mark<=5 AND (mark%0.5)=0.0 AND weight>=1 AND weight<=10));')
     cursor.execute('CREATE TABLE IF NOT EXISTS studentComments(id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL, studentId INTEGER NOT NULL, teacherId INTEGER NOT NULL, comment TEXT NOT NULL, CONSTRAINT FK_studentComments_studentId FOREIGN KEY (studentId) REFERENCES students(personId), CONSTRAINT FK_studentComments_teacherId FOREIGN KEY (teacherId) REFERENCES teachers(personId));')
@@ -654,8 +654,8 @@ def initializeDaysInWeek():
     db = getDBConn()
     cursor = db.cursor()
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    for d in days:
-      cursor.execute('INSERT OR IGNORE INTO daysInWeek(name) VALUES(?)', (d,))
+    for i, d in enumerate(days):
+      cursor.execute('INSERT OR IGNORE INTO daysInWeek(id, name) VALUES(?, ?)', (i, d))
   except sqlite3.Error as e:
     logger.log(f'An error in SQL syntax occurred while initializing daysInWeek; Error message: {e};')
   except Exception as e:
@@ -664,11 +664,100 @@ def initializeDaysInWeek():
   return True
 
 
+def addLectureTime(lectureId: int, time: datetime.datetime):
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    cursor.execute('INSERT INTO lectureTimes(id, startTime) VALUES(?, ?)', (lectureId, time))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding lectureTime; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding lectureTime; Error message: {e}')
+  db.commit()
+  return True
+
+
+def initializeLectures():
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    days = cursor.execute('SELECT id FROM daysInWeek')
+    days = days.fetchall()
+    times = cursor.execute('SELECT id FROM lectureTimes')
+    times = times.fetchall()
+    for evenWeek in [0, 1]:
+      for d in days:
+        for t in times:
+          cursor.execute('INSERT OR IGNORE INTO lectures(isEvenWeek, dayId, timeId) VALUES(?, ?, ?)', (evenWeek, d[0], t[0]))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while initializing lectures; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while initializing lectures; Error message: {e}')
+  db.commit()
+  return True
+
+# [id, day, time, isevenweek]
+def getAllLectures() -> list[int, str, datetime.datetime, bool]:
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    lectures = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek FROM lectures
+                                                JOIN daysInWeek d ON lectures.dayId=d.id
+                                                JOIN lectureTimes t ON lectures.timeId=t.id;''')
+    lectures = lectures.fetchall()
+    db.commit()
+    for i, lecture in enumerate(lectures):
+      lectures[i] = list(lecture)
+      lectures[i][3] = datetime.datetime.strptime(lectures[i][3], '%Y-%m-%d %H:%M:%S')
+      lectures[i][4] = bool(lectures[i][4])
+    return lectures
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting all lectures; Error message: {e}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting all lectures; Error message: {e}')
+  db.commit()
+  return []
 
 
 
+def addScheduleSingle(lectureId: int, classId: int, teacherId: int, subjectId: int, classroomId: int, FullORAB: str):
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    cursor.execute('INSERT INTO schedules(lectureId, classId, teacherId, subjectId, classroomId, FullORAB) VALUES(?, ?, ?, ?, ?, ?)', (lectureId, classId, teacherId, subjectId, classroomId, FullORAB))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding schedule single; Error message: {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding schedule single; Error message: {e}')
+  db.commit()
+  return True
 
-
+def getScheduleForClass(classId: int):
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    schedule = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek, teachers.strIdentifier, subjects.strIdentifier, buildings.strIdentifier, classrooms.number FROM schedules
+                                                JOIN lectures ON schedules.lectureId=lectures.id
+                                                JOIN daysInWeek d ON lectures.dayId=d.id
+                                                JOIN lectureTimes t ON lectures.timeId=t.id
+                                                JOIN teachers ON schedules.teacherId=teachers.personId
+                                                JOIN subjects ON schedules.subjectId=subjects.id
+                                                JOIN classrooms ON schedules.classroomId=classrooms.id
+                                                JOIN buildings ON classrooms.buildingId=buildings.id
+                                                WHERE schedules.classId=?;''', (classId,))
+    schedule = schedule.fetchall()
+    db.commit()
+    for i, lecture in enumerate(schedule):
+      schedule[i] = list(lecture)
+      schedule[i][3] = datetime.datetime.strptime(schedule[i][3], '%Y-%m-%d %H:%M:%S')
+      schedule[i][4] = bool(schedule[i][4])
+    return schedule
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting schedule for class; Error message: {e}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting schedule for class; Error message: {e}')
+  db.commit()
+  return []
 
 
 
