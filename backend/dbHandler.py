@@ -213,11 +213,26 @@ def getAllCourses():
   return []
 
 
+# Initialize basic roles (admin, teacher, student)
+def initializeRoles():
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    default = ['admin', 'teacher', 'student']
+    for role in default:
+      cursor.execute('INSERT OR IGNORE INTO roles(role) VALUES(?);', (role,))
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while adding a role; Error message: {e}; Data: {(role)}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while adding a role; Error message: {e}')
+  db.commit()
+  return True
 
 def addRole(role: str):
   try:
     db = getDBConn()
     cursor = db.cursor()
+    role = role.lower()
     cursor.execute('INSERT INTO roles(role) VALUES(?);', (role,))
   except sqlite3.Error as e:
     logger.log(f'An error in SQL syntax occurred while adding a role; Error message: {e}; Data: {(role)}')
@@ -825,23 +840,23 @@ def getScheduleForClassroom(classroomId: int):
 
 
 
-# Log in a user; returns id (if fail -> id = -1)
+# Log in a user; returns id,role (if fail -> id = -1)
 def logInUser(username, password):
   try:
     db = getDBConn()
     cursor = db.cursor()
     # Get id, salt and password of a username
-    account = cursor.execute('SELECT id, salt, password, disabled FROM accounts WHERE username = ?;', (username,))
+    account = cursor.execute('SELECT a.personId, a.salt, a.password, a.disabled, roles.role FROM roles JOIN people ON roles.id=people.roleId JOIN accounts a ON people.id=a.personId WHERE a.username = ?;', (username,))
     account = account.fetchone()
     db.commit()
     # Check if the username exists
     if account:
       # Check if the account is disabled
       if account[3] == 1:
-        return -1
+        return -1, ''
       # Check if the password is right
       if (checkHashedPassword(password, account[1], account[2])):
-        return account[0]
+        return account[0], account[4]
       else:
         logger.log(f'Password didn\'t match for user {username}', 2)
     else:
@@ -851,7 +866,7 @@ def logInUser(username, password):
   except Exception as e:
     logger.log(f'An unexpected error occurred while logging in a user; Error message: {e}')
   db.commit()
-  return -1
+  return -1, ''
 
 
 # Return True if Username was found in table
@@ -880,10 +895,10 @@ def removeUser(ix):
     db = getDBConn()
     cursor = db.cursor()
     # Find a user
-    user = cursor.execute('SELECT username FROM accounts WHERE id = ?;', (ix,))
+    user = cursor.execute('SELECT username FROM accounts WHERE personId = ?;', (ix,))
     user = user.fetchone()
     if user:
-      cursor.execute('DELETE FROM accounts WHERE id = ?', (ix,))
+      cursor.execute('DELETE FROM accounts WHERE personId = ?', (ix,))
     else:
       # If we were unable to find the id in accounts, we log it as a warning
       logger.log(f'Recieved remove request for id({ix}), however requested row is not present in accounts table aborting', 2)
@@ -893,3 +908,43 @@ def removeUser(ix):
     logger.log(f'An unexpected error occurred while removing a user; Error message: {e}')
   db.commit()
   return True
+
+initialize()
+addBuilding('Skalka', 'SKA')
+addClassroom(26, 15, 1)
+addClassroom(27, 15, 1)
+addClassroom(28, 15, 1)
+addCourse('Truhlar', 'T')
+addRole('Student')
+addRole('Teacher')
+addPerson(123, 1, 'jarda', 'pravda')
+addPerson(124, 2, 'mike', 'pravda')
+addPerson(125, 1, 'mike', 'lost')
+addPerson(126, 2, 'jarda', 'pravda')
+addEmployee(2)
+addEmployee(4, 2)
+addTeacher(2, datetime.date(2014, 9, 1), 'PRM')
+addTeacher(4, datetime.date(2018, 9, 1), 'PRJ')
+addClass(1, 2023, 1, 2, 1)
+addStudent(1, 1, 'A')
+addStudent(2, 1, 'B')
+addSubject('Programming', 'PRG')
+addSubject('Database applications', 'DBA')
+addTeacherSubjectExpertise(2, 1)
+addTeacherSubjectExpertise(2, 2)
+addTeacherSubjectExpertise(4, 1)
+initializeDaysInWeek()
+addLectureTime(0, datetime.datetime(2000, 10, 10, 7, 10, 0))
+addLectureTime(1, datetime.datetime(2000, 10, 10, 8, 0, 0))
+addLectureTime(2, datetime.datetime(2000, 10, 10, 8, 50, 0))
+addLectureTime(3, datetime.datetime(2000, 10, 10, 9, 45, 0))
+addLectureTime(4, datetime.datetime(2000, 10, 10, 10, 50, 0))
+addLectureTime(5, datetime.datetime(2000, 10, 10, 11, 40, 0))
+addLectureTime(6, datetime.datetime(2000, 10, 10, 12, 30, 0))
+initializeLectures()
+addScheduleSingle(2, 1, 2, 1, 1, 'F')
+addScheduleSingle(4, 1, 2, 2, 1, 'A')
+addScheduleSingle(4, 1, 4, 1, 3, 'B')
+addScheduleSingle(12, 1, 2, 1, 2, 'F')
+print(getScheduleForClass(1), getScheduleForTeacher(2), getScheduleForTeacher(4), getScheduleForClassroom(1), getScheduleForClassroom(2), getScheduleForClassroom(3), sep='\n')
+input()
