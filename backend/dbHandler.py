@@ -732,11 +732,12 @@ def addScheduleSingle(lectureId: int, classId: int, teacherId: int, subjectId: i
   db.commit()
   return True
 
+# [lectureId, day, timeId, time, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
 def getScheduleForClass(classId: int):
   try:
     db = getDBConn()
     cursor = db.cursor()
-    schedule = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek, teachers.strIdentifier, subjects.strIdentifier, buildings.strIdentifier, classrooms.number FROM schedules
+    schedule = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek, teachers.strIdentifier, subjects.strIdentifier, buildings.strIdentifier, classrooms.number, schedules.fullOrAB FROM schedules
                                                 JOIN lectures ON schedules.lectureId=lectures.id
                                                 JOIN daysInWeek d ON lectures.dayId=d.id
                                                 JOIN lectureTimes t ON lectures.timeId=t.id
@@ -745,6 +746,63 @@ def getScheduleForClass(classId: int):
                                                 JOIN classrooms ON schedules.classroomId=classrooms.id
                                                 JOIN buildings ON classrooms.buildingId=buildings.id
                                                 WHERE schedules.classId=?;''', (classId,))
+    schedule = schedule.fetchall()
+    db.commit()
+    for i, lecture in enumerate(schedule):
+      schedule[i] = list(lecture)
+      schedule[i][3] = datetime.datetime.strptime(schedule[i][3], '%Y-%m-%d %H:%M:%S')
+      schedule[i][4] = bool(schedule[i][4])
+    return schedule
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting schedule for class; Error message: {e}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting schedule for class; Error message: {e}')
+  db.commit()
+  return []
+
+# [lectureId, day, timeId, time, evenWeek, courseStrID, classStratYear, classGroupNumber, subjectStrID, buildingStrID, classroomNum, fullOrAB]
+def getScheduleForTeacher(teacherId: int):
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    schedule = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek, courses.strIdentifier, classes.startYear, classes.groupNumber, subjects.strIdentifier, buildings.strIdentifier, classrooms.number, schedules.fullOrAB FROM schedules
+                                                JOIN lectures ON schedules.lectureId=lectures.id
+                                                JOIN daysInWeek d ON lectures.dayId=d.id
+                                                JOIN lectureTimes t ON lectures.timeId=t.id
+                                                JOIN classes ON schedules.classId=classes.id
+                                                JOIN courses ON classes.courseId=courses.id
+                                                JOIN subjects ON schedules.subjectId=subjects.id
+                                                JOIN classrooms ON schedules.classroomId=classrooms.id
+                                                JOIN buildings ON classrooms.buildingId=buildings.id
+                                                WHERE schedules.teacherId=?;''', (teacherId,))
+    schedule = schedule.fetchall()
+    db.commit()
+    for i, lecture in enumerate(schedule):
+      schedule[i] = list(lecture)
+      schedule[i][3] = datetime.datetime.strptime(schedule[i][3], '%Y-%m-%d %H:%M:%S')
+      schedule[i][4] = bool(schedule[i][4])
+    return schedule
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting schedule for class; Error message: {e}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting schedule for class; Error message: {e}')
+  db.commit()
+  return []
+
+# [lectureId, day, timeId, time, evenWeek, courseStrID, classStratYear, classGroupNumber, subjectStrID, teacherStrID, fullOrAB]
+def getScheduleForClassroom(classroomId: int):
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    schedule = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek, courses.strIdentifier, classes.startYear, classes.groupNumber, subjects.strIdentifier, teachers.strIdentifier, schedules.fullOrAB FROM schedules
+                                                JOIN lectures ON schedules.lectureId=lectures.id
+                                                JOIN daysInWeek d ON lectures.dayId=d.id
+                                                JOIN lectureTimes t ON lectures.timeId=t.id
+                                                JOIN classes ON schedules.classId=classes.id
+                                                JOIN courses ON classes.courseId=courses.id
+                                                JOIN subjects ON schedules.subjectId=subjects.id
+                                                JOIN teachers ON schedules.teacherId=teachers.personId
+                                                WHERE schedules.classroomId=?;''', (classroomId,))
     schedule = schedule.fetchall()
     db.commit()
     for i, lecture in enumerate(schedule):
