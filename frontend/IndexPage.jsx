@@ -1,12 +1,21 @@
+import LoginForm from "./LoginForm";
+
+import './indexPage.css'
 
 function IndexPage() {
 
   return (
     <>
-      <h1>Welcome to index</h1>
-      <a href="/login">
-        <button>Log in</button>
-      </a>
+      <div className="container">
+        <div className="index-content">
+          <h1>SchoolMGMT</h1>
+          <br />
+          <p>SchoolMGMT is an easy to use web server application, that provides all the necessary tools for managing school.</p>
+        </div>
+        <div className="index-login">
+          <LoginForm />
+        </div>
+      </div>
     </>
   );
 

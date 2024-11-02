@@ -1,0 +1,30 @@
+.login-form-box {
+  width: 100%;
+  max-width: 320px;
+  height: 180px;
+  background-color: var(--cyan);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.login-form-text {
+  color: var(--darktext);
+  font-size: 0.85em;
+  margin-right: 10px;
+}
+
+.login-form-button {
+  width: 45%;
+  min-width: 100px;
+  padding: 5px;
+  color: var(--lighttext);
+  background-color: var(--blue);
+  align-self: flex-end;
+}
+
+.login-form-button:hover {
+  background-color:hsl(from var(--blue) h s calc(l-10));
+}

@@ -1,0 +1,15 @@
+.container {
+  width: 60%;
+  margin: auto;
+  display: flex;
+  flex-direction: row;
+}
+
+.index-content {
+  flex: 3;
+}
+
+.index-login {
+  flex: 1;
+  padding-top: 10vh;
+}

@@ -6,10 +6,30 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* COLOR SCHEME */
+  --white: hsl(0, 0%, 95%);
+  --lightgray: hsl(0, 0%, 85%);
+  --darkgray: hsl(0, 0%, 50%);
+  --lighttext: hsl(0, 0%, 90%);
+  --darktext: hsl(0, 0%, 5%);
+  --red: hsl(0, 90%, 50%);
+  --green: hsl(125, 90%, 30%);
+  --blue: hsl(225, 75%, 40%);
+  --cyan: hsl(185, 80%, 50%);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+button {
+  cursor: pointer;
 }
