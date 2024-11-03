@@ -1,15 +1,23 @@
 .container {
-  width: 60%;
+  width: 80%;
+  min-height: 100vh;
   margin: auto;
   display: flex;
   flex-direction: row;
+  background-color: var(--white);
 }
 
 .index-content {
+  padding: 20px;
   flex: 3;
 }
 
 .index-login {
   flex: 1;
   padding-top: 10vh;
+}
+
+h1 {
+  background-color: var(--cyan);
+  padding-left: 10px;
 }

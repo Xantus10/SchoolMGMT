@@ -6,14 +6,13 @@
   padding: 10px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: flex-start;
+  gap: 8px;
 }
 
 .login-form-text {
   color: var(--darktext);
   font-size: 0.85em;
-  margin-right: 10px;
 }
 
 .login-form-button {
@@ -26,5 +25,5 @@
 }
 
 .login-form-button:hover {
-  background-color:hsl(from var(--blue) h s calc(l-10));
+  background-color: var(--hoverblue);
 }

@@ -37,12 +37,10 @@ function LoginForm() {
   return (
     <>
     <div className="login-form-box">
-      <label><span className="login-form-text">Username</span>
+      <span className="login-form-text">Username</span>
       <input type="text" placeholder="Username" value={username} onChange={handleUsernameInput} />
-      </label>
-      <label><span className="login-form-text">Password</span>
+      <span className="login-form-text">Password</span>
       <input type="password" placeholder="Password" value={password} onChange={handlePasswordInput} />
-      </label>
       <button className="login-form-button" onClick={login}>Log in</button>
       <p>{status}</p>
     </div>

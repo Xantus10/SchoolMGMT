@@ -17,12 +17,26 @@
   --green: hsl(125, 90%, 30%);
   --blue: hsl(225, 75%, 40%);
   --cyan: hsl(185, 80%, 50%);
+
+  /* HOVER COLORS */
+  --hoverwhite: hsl(0, 0%, 85%);
+  --hoverlightgray: hsl(0, 0%, 75%);
+  --hoverdarkgray: hsl(0, 0%, 40%);
+  --hoverred: hsl(0, 90%, 40%);
+  --hovergreen: hsl(125, 90%, 20%);
+  --hoverblue: hsl(225, 75%, 30%);
+  --hovercyan: hsl(185, 80%, 40%);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--lightgray);
 }
 
 #root {
