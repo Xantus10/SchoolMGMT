@@ -18,11 +18,12 @@ function LoginForm() {
   }
 
   function login() {
-    axios.post('http://localhost:5000/login', {username: username, password: password}, {headers: {"Content-Type": "application/json"}}).then(
+    axios.post('http://localhost:5000/login', {username: username, password: password}, {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
         switch (resp.data.status) {
           case 200:
             setStatus('OK Redirecting...')
+            window.location.href = '/home'
             break;
           case 403:
             setStatus('Incorrect username or password!')

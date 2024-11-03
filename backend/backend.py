@@ -12,7 +12,7 @@ jwt.set_secret_key('v4t13G*N-HJQ5v+173Y5+.vEbpV^BGGH60[R<8Ev63V*D+5Aa4eQ5tva]}')
 jwt.set_expires(COOKIEEXPIRYSECONDS)
 
 app = Flask(__name__)
-CORS(app, origins=['http://localhost:5173'])
+CORS(app, origins=['http://localhost:5173'], supports_credentials=True)
 
 
 @app.route('/login', methods=['POST'])
@@ -32,7 +32,7 @@ def flask_login():
     JWT_token, JWT_user_context = jwt.jwtencode(data)
     expires = datetime.now() + timedelta(seconds=COOKIEEXPIRYSECONDS)
     # Set cookies
-    resp.set_cookie('JWT_token', JWT_token, expires=expires)
+    resp.set_cookie('JWT_token', JWT_token, expires=expires, domain='localhost')
     resp.set_cookie('JWT_user_context', JWT_user_context, httponly=True, samesite='Strict', expires=expires)
     return resp
   return{'status': 403}
