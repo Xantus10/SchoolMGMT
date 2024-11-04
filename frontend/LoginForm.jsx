@@ -22,7 +22,7 @@ function LoginForm() {
       (resp) => {
         switch (resp.data.status) {
           case 200:
-            setStatus('OK Redirecting...')
+            setStatus(<>OK Redirecting... <a href="/home">Click here if you are not redirected</a></>)
             window.location.href = '/home'
             break;
           case 403:

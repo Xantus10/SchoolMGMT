@@ -17,6 +17,7 @@
   --green: hsl(125, 90%, 30%);
   --blue: hsl(225, 75%, 40%);
   --cyan: hsl(185, 80%, 50%);
+  --lightcyan: hsl(185, 75%, 75%);
 
   /* HOVER COLORS */
   --hoverwhite: hsl(0, 0%, 85%);
@@ -26,6 +27,7 @@
   --hovergreen: hsl(125, 90%, 20%);
   --hoverblue: hsl(225, 75%, 30%);
   --hovercyan: hsl(185, 80%, 40%);
+  --hoverlightcyan: hsl(185, 75%, 65%);
 }
 
 * {
