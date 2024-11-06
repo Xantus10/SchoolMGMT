@@ -45,6 +45,40 @@ def flask_checkUsername():
   return {'status': 200, 'found': found}
 
 
+@app.route('/getRoles')
+def flask_getRoles():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 403})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 401}
+  roles = dbHandler.getAllRoles()
+  return {'status': 200, 'roles': roles}
+
+@app.route('/createPerson', methods=['POST'])
+def flask_createPerson():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 403})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 401}
+    fname = request.json['firstName']
+    lname = request.json['lastName']
+    birthNum = request.json['birthNumber']
+    roleId = request.json['roleId']
+    dbHandler.addPerson(birthNum, roleId, fname, lname)
+    return {'status': 200}
+  return {'status': 403}
+
 @app.route('/createAccount', methods=['POST'])
 def flask_createAccount():
   if request.method == 'POST':
