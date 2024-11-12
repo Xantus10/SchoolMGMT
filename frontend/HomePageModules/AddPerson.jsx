@@ -13,7 +13,7 @@ function AddPerson() {
   useEffect(() => {
     axios.get('http://localhost:5000/getAllRoles', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        setRolesList(resp.data.roles);
+        setRolesList(resp.data.roles.map(role => <option value={role[0]}>{role[1]}</option>));
       }
     )
   }, [])
@@ -33,7 +33,12 @@ function AddPerson() {
     <span>Last name</span>
     <input type="text" placeholder='Doe' value={lastName} onChange={(e) => setLastName(e.target.value)} />
     <span>Birth number</span>
-    <input type="text" placeholder='Doe' value={birthNumber} onChange={(e) => setBirthNumber(e.target.value)} />
+    <input type="number" placeholder='0123456789' value={birthNumber} onChange={(e) => setBirthNumber(e.target.value)} />
+    <span>Role</span>
+    <select value={roleId} onChange={(e) => setRoleId(e.target.value)}>
+      {rolesList}
+    </select>
+    <button onClick={createPerson}></button>
     </>
   );
 }
