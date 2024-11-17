@@ -93,8 +93,8 @@ def flask_createAccount():
     if data['role'] != 'admin': {'status': 401}
     username = request.json['username']
     password = request.json['password']
-    personId = request.json['personId']
-    dbHandler.addAccount(personId, username, password)
+    birthNumber = dbHandler.getPersonByBirthNumber(int(request.json['birthNumber'].replace('/', '')))[0]
+    dbHandler.addAccount(birthNumber, username, password)
     return {'status': 200}
   return {'status': 403}
 
@@ -117,7 +117,7 @@ def flask_createBuilding():
   return {'status': 403}
 
 @app.route('/getBuildings')
-def flask_getRoles():
+def flask_getBuildings():
   JWT_token = request.cookies.get('JWT_token')
   JWT_user_context = request.cookies.get('JWT_user_context')
   isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
@@ -127,11 +127,11 @@ def flask_getRoles():
     resp.delete_cookie('JWT_user_context')
     return resp
   if data['role'] != 'admin': {'status': 401}
-  roles = dbHandler.getAllBuildings()
-  return {'status': 200, 'roles': roles}
+  buildings = dbHandler.getAllBuildings()
+  return {'status': 200, 'buildings': buildings}
 
 @app.route('/createClassroom', methods=['POST'])
-def flask_createBuilding():
+def flask_createClassroom():
   if request.method == 'POST':
     JWT_token = request.cookies.get('JWT_token')
     JWT_user_context = request.cookies.get('JWT_user_context')

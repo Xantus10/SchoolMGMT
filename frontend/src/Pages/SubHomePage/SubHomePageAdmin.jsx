@@ -1,7 +1,9 @@
 import { Group, Menu, Text, Button } from '@mantine/core';
 
-import AddAccount from '../../HomePageModules/AddAccount.jsx'
-import AddPerson from '../../HomePageModules/AddPerson.jsx'
+import AddAccount from '../../HomePageModules/AddAccount.jsx';
+import AddPerson from '../../HomePageModules/AddPerson.jsx';
+import AddBuilding from '../../HomePageModules/AddBuilding.jsx';
+import AddClassroom from '../../HomePageModules/AddClassroom.jsx';
 
 
 function SubHomePageAdmin({setContent}) {
@@ -26,6 +28,26 @@ function SubHomePageAdmin({setContent}) {
           </Menu.Label>
           <Menu.Item onClick={e => setContent(<AddPerson />)}>
             <Text>Add person</Text>
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+      <Menu>
+        <Menu.Target>
+          <Button>Buildings &amp; Classrooms</Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>
+            Buildings
+          </Menu.Label>
+          <Menu.Item onClick={e => setContent(<AddBuilding />)}>
+            <Text>Add building</Text>
+          </Menu.Item>
+          <Menu.Divider />
+          <Menu.Label>
+            Classrooms
+          </Menu.Label>
+          <Menu.Item onClick={e => setContent(<AddClassroom />)}>
+            <Text>Add classroom</Text>
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
