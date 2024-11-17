@@ -73,7 +73,7 @@ def flask_createPerson():
     if data['role'] != 'admin': {'status': 401}
     fname = request.json['firstName']
     lname = request.json['lastName']
-    birthNum = request.json['birthNumber']
+    birthNum = int(request.json['birthNumber'].replace('/', ''))
     roleId = request.json['roleId']
     dbHandler.addPerson(birthNum, roleId, fname, lname)
     return {'status': 200}
@@ -98,6 +98,58 @@ def flask_createAccount():
     return {'status': 200}
   return {'status': 403}
 
+@app.route('/createBuilding', methods=['POST'])
+def flask_createBuilding():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 403})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 401}
+    name = request.json['name']
+    strId = request.json['strId']
+    dbHandler.addBuilding(name, strId)
+    return {'status': 200}
+  return {'status': 403}
+
+@app.route('/getBuildings')
+def flask_getRoles():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 403})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 401}
+  roles = dbHandler.getAllBuildings()
+  return {'status': 200, 'roles': roles}
+
+@app.route('/createClassroom', methods=['POST'])
+def flask_createBuilding():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 403})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 401}
+    number = request.json['number']
+    capacity = request.json['capacity']
+    buildingId = request.json['buildingId']
+    dbHandler.addClassroom(number, capacity, buildingId)
+    return {'status': 200}
+  return {'status': 403}
+
+
 
 def main():
   dbHandler.initializeAll()
@@ -105,7 +157,7 @@ def main():
   if not admin:
     dbHandler.addPerson(0, 1, 'admin', 'admin')
     dbHandler.addAccount(1, 'admin', 'admin')
-  app.run(port=5000)
+  app.run(port=5000)#, ssl_context=('cert.pem', 'key.pem'))
 
 
 if __name__ == '__main__':
