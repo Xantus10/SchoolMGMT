@@ -35,7 +35,7 @@ function AddBuilding() {
     <Title order={2}>Add building</Title>
     <Stack w={'max-content'} gap={7}>
       <TextInput label="Name" placeholder='Building A' key={form.key('name')} {...form.getInputProps('name')} />
-      <TextInput label="String identifier" description="Identifier should be short and comprehensive" key={form.key('strId')} onInput={(e) => form.validateField('strId')} {...form.getInputProps('strId')} />
+      <TextInput label="String identifier" description="Identifier should be short and comprehensive" key={form.key('strId')} {...form.getInputProps('strId')} />
       <Group justify='flex-end'><Button onClick={createBuilding}>Submit</Button></Group>
       <Text>{status}</Text>
     </Stack>

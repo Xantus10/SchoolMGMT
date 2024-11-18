@@ -54,7 +54,7 @@ function AddPerson() {
     <>
     <Title order={2}>Add person</Title>
     <Stack w={'max-content'} gap={7}>
-      <TextInput label="Birth number" placeholder='010101/2222' key={form.key('birthNumber')} onInput={(e) => form.validateField('birthNumber')} {...form.getInputProps('birthNumber')} />
+      <TextInput label="Birth number" placeholder='010101/2222' key={form.key('birthNumber')} {...form.getInputProps('birthNumber')} />
       <TextInput label="First name" placeholder='Jane' key={form.key('firstName')} {...form.getInputProps('firstName')} />
       <TextInput label="Last name" placeholder='Doe' key={form.key('lastName')} {...form.getInputProps('lastName')} />
       <NativeSelect label="Role" description="Be careful" data={rolesList} key={form.key('roleId')} {...form.getInputProps('roleId')} />

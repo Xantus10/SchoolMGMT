@@ -38,10 +38,10 @@ function AddAccount() {
     <>
     <Title order={2}>Add account</Title>
     <Stack w={'max-content'} gap={7}>
-      <TextInput label="Birth number" placeholder='010101/2222' key={form.key('birthNumber')} onInput={(e) => form.validateField('birthNumber')} {...form.getInputProps('birthNumber')} />
+      <TextInput label="Birth number" placeholder='010101/2222' key={form.key('birthNumber')} {...form.getInputProps('birthNumber')} />
       <TextInput label="Username" placeholder='Martin10' key={form.key('username')} {...form.getInputProps('username')} />
-      <PasswordInput label="Password" placeholder='Password123' key={form.key('password')} onInput={(e) => form.validateField('password')} {...form.getInputProps('password')} />
-      <PasswordInput label="Repeat password" placeholder='Password123' key={form.key('rpass')} onInput={(e) => form.validateField('rpass')} {...form.getInputProps('rpass')} />
+      <PasswordInput label="Password" placeholder='Password123' key={form.key('password')} {...form.getInputProps('password')} />
+      <PasswordInput label="Repeat password" placeholder='Password123' key={form.key('rpass')} {...form.getInputProps('rpass')} />
       <Group justify='flex-end'><Button onClick={createAccount}>Submit</Button></Group>
       <Text>{status}</Text>
     </Stack>
