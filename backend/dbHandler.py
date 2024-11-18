@@ -69,7 +69,7 @@ def initialize():
   except Exception as e:
     logger.log(f'An unexpected error occurred while initializing tables; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 
 # Add a building with specified parameters
@@ -79,11 +79,13 @@ def addBuilding(name: str, strIdentifier: str):
     cursor = db.cursor()
     cursor.execute('INSERT INTO buildings(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a building; Error message: {e}; Data: {(name, strIdentifier)}')
+    logger.log(f'An error in SQL syntax occurred while adding a building; Error message: ({e.sqlite_errorcode}) {e}; Data: {(name, strIdentifier)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a building; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 def getAllBuildings() -> list[list[int, str, str]]:
   try:
@@ -94,7 +96,7 @@ def getAllBuildings() -> list[list[int, str, str]]:
     db.commit()
     return building
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all buildings; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while getting all buildings; Error message: ({e.sqlite_errorcode}) {e};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all buildings; Error message: {e}')
   db.commit()
@@ -113,7 +115,7 @@ def getBuildingByName(name: str) -> list[int, str, str]:
     logger.log(f'Building was not found for name {name}', 2)
     return []
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting a building; Error message: {e}; Data: {(name)}')
+    logger.log(f'An error in SQL syntax occurred while getting a building; Error message: ({e.sqlite_errorcode}) {e}; Data: {(name)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting a building; Error message: {e}')
   db.commit()
@@ -132,7 +134,7 @@ def getBuildingById(buildingId: int) -> list[int, str, str]:
     logger.log(f'Building was not found for id {buildingId}', 2)
     return []
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting a building; Error message: {e}; Data: {(buildingId)}')
+    logger.log(f'An error in SQL syntax occurred while getting a building; Error message: ({e.sqlite_errorcode}) {e}; Data: {(buildingId)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting a building; Error message: {e}')
   db.commit()
@@ -146,11 +148,13 @@ def addClassroom(number: int, capacity: int, buildingId: int):
     cursor = db.cursor()
     cursor.execute('INSERT INTO classrooms(number, capacity, buildingId) VALUES(?, ?, ?);', (number, capacity, buildingId))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a classroom; Error message: {e}; Data: {(number, capacity, buildingId)}')
+    logger.log(f'An error in SQL syntax occurred while adding a classroom; Error message: ({e.sqlite_errorcode}) {e}; Data: {(number, capacity, buildingId)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a classroom; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [id, number, capacity]
 def getAllClassroomsForBuilding(buildingId: int) -> list[list[int, int, int]]:
@@ -162,7 +166,7 @@ def getAllClassroomsForBuilding(buildingId: int) -> list[list[int, int, int]]:
     db.commit()
     return classrooms
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all classrooms; Error message: {e}; Data: {buildingId}')
+    logger.log(f'An error in SQL syntax occurred while getting all classrooms; Error message: ({e.sqlite_errorcode}) {e}; Data: {buildingId}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all classrooms; Error message: {e}')
   db.commit()
@@ -177,7 +181,7 @@ def getClassroomId(number: int, buildingId: int) -> int:
     db.commit()
     return classrooms
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting classroomId; Error message: {e}; Data: {(number, buildingId)}')
+    logger.log(f'An error in SQL syntax occurred while getting classroomId; Error message: ({e.sqlite_errorcode}) {e}; Data: {(number, buildingId)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting classroomId; Error message: {e}')
   db.commit()
@@ -191,11 +195,13 @@ def addCourse(name: str, strId: str):
     cursor = db.cursor()
     cursor.execute('INSERT INTO courses(name, strIdentifier) VALUES(?, ?);', (name, strId))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a course; Error message: {e}; Data: {(name, strId)}')
+    logger.log(f'An error in SQL syntax occurred while adding a course; Error message: ({e.sqlite_errorcode}) {e}; Data: {(name, strId)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a course; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 def getAllCourses():
   try:
@@ -206,7 +212,7 @@ def getAllCourses():
     db.commit()
     return courses
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all courses; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while getting all courses; Error message: ({e.sqlite_errorcode}) {e};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all courses; Error message: {e}')
   db.commit()
@@ -222,11 +228,13 @@ def initializeRoles():
     for role in default:
       cursor.execute('INSERT OR IGNORE INTO roles(role) VALUES(?);', (role,))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a role; Error message: {e}; Data: {(role)}')
+    logger.log(f'An error in SQL syntax occurred while adding a role; Error message: ({e.sqlite_errorcode}) {e}; Data: {(role)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a role; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 def addRole(role: str):
   try:
@@ -235,11 +243,13 @@ def addRole(role: str):
     role = role.lower()
     cursor.execute('INSERT INTO roles(role) VALUES(?);', (role,))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a role; Error message: {e}; Data: {(role)}')
+    logger.log(f'An error in SQL syntax occurred while adding a role; Error message: ({e.sqlite_errorcode}) {e}; Data: {(role)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a role; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 def getAllRoles():
   try:
@@ -250,7 +260,7 @@ def getAllRoles():
     db.commit()
     return roles
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all roles; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while getting all roles; Error message: ({e.sqlite_errorcode}) {e};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all roles; Error message: {e}')
   db.commit()
@@ -270,11 +280,13 @@ def addPerson(birthNumber: int, roleId: int, firstName: str, lastName: str):
     lnId = lnId.fetchone()[0]
     cursor.execute('INSERT INTO people(birthNumber, roleId, firstNameId, lastNameId) VALUES(?, ?, ?, ?)', (birthNumber, roleId, fnId, lnId))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a person; Error message: {e}; Data: {(birthNumber, roleId, firstName, lastName)}')
+    logger.log(f'An error in SQL syntax occurred while adding a person; Error message: ({e.sqlite_errorcode}) {e}; Data: {(birthNumber, roleId, firstName, lastName)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a person; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [id, role, fname, lname]
 def getPersonByBirthNumber(birthNumber: int) -> list[int, str, str, str]:
@@ -290,7 +302,7 @@ def getPersonByBirthNumber(birthNumber: int) -> list[int, str, str, str]:
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {birthNumber}')
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {birthNumber}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
   db.commit()
@@ -310,7 +322,7 @@ def getPersonById(pid: int) -> list[int, str, str, str]:
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {pid}')
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {pid}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
   db.commit()
@@ -336,7 +348,7 @@ def getAllPeopleWithName(firstName: str='', lastName: str='') -> list[list[int, 
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {firstName, lastName}')
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {firstName, lastName}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
   db.commit()
@@ -356,7 +368,7 @@ def getAllPeopleWithRole(role: str) -> list[list[int, int, str, str]]:
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {role}')
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {role}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
   db.commit()
@@ -374,11 +386,13 @@ def addAccount(personId: int, username: str, password: str):
     # INSERT into accounts table
     cursor.execute('INSERT INTO accounts(personId, username, salt, password) VALUES(?, ?, ?, ?);', data)
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a user; Error message: {e}; Data: {(personId, username, salt, password)}')
+    logger.log(f'An error in SQL syntax occurred while adding a user; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, username, salt, password)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a user; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 def getAccountInfoById(personId: int) -> list[str, bool]:
   try:
@@ -390,7 +404,7 @@ def getAccountInfoById(personId: int) -> list[str, bool]:
     if account: account[1] = bool(account[1])
     return account
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting account; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while getting account; Error message: ({e.sqlite_errorcode}) {e};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting account; Error message: {e}')
   db.commit()
@@ -408,11 +422,11 @@ def checkForSupervisorLoop(personId: int, supervisorId: int) -> bool:
       db.commit()
       if sup: return sup[1] == personId
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while checking supervisor loops; Error message: {e}; Data: {(personId, supervisorId)}')
+    logger.log(f'An error in SQL syntax occurred while checking supervisor loops; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, supervisorId)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while checking supervisor loops; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 def addEmployee(personId: int, supervisorId: int=None):
   try:
@@ -420,11 +434,13 @@ def addEmployee(personId: int, supervisorId: int=None):
       cursor = db.cursor()
       cursor.execute('INSERT INTO employees(personId, supervisorId) VALUES(?, ?);', (personId, supervisorId))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding an employee; Error message: {e}; Data: {(personId, supervisorId)}')
+    logger.log(f'An error in SQL syntax occurred while adding an employee; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, supervisorId)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding an employee; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 def getEmployeeById(personId: int) -> list[int, int]:
   try:
@@ -435,7 +451,7 @@ def getEmployeeById(personId: int) -> list[int, int]:
     db.commit()
     return emp
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting employee; Error message: {e}; Data: {personId};')
+    logger.log(f'An error in SQL syntax occurred while getting employee; Error message: ({e.sqlite_errorcode}) {e}; Data: {personId};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting employee; Error message: {e}')
   db.commit()
@@ -456,7 +472,7 @@ def getAllEmployeesWithSupervisor(supervisorId: int) -> list[int, str, str, str]
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: {e}; Data: {supervisorId}')
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {supervisorId}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
   db.commit()
@@ -469,11 +485,13 @@ def addTeacher(personId: int, teachingFrom: datetime.date, strIdentifier: str):
       cursor = db.cursor()
       cursor.execute('INSERT INTO teachers(personId, teachingFrom, strIdentifier) VALUES(?, ?, ?);', (personId, teachingFrom, strIdentifier))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a teacher; Error message: {e}; Data: {(personId, teachingFrom, strIdentifier)}')
+    logger.log(f'An error in SQL syntax occurred while adding a teacher; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, teachingFrom, strIdentifier)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a teacher; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [id, fname, lname, strID, teachFrom]
 def getAllTeachers() -> list[int, str, str, str, datetime.datetime]:
@@ -492,7 +510,7 @@ def getAllTeachers() -> list[int, str, str, str, datetime.datetime]:
       teachers[i][-1] = datetime.datetime.strptime(teachers[i][-1], '%Y-%m-%d')
     return teachers
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all teachers; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while getting all teachers; Error message: ({e.sqlite_errorcode}) {e};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all teachers; Error message: {e}')
   db.commit()
@@ -506,11 +524,13 @@ def addClass(courseId: int, startYear: int, rootClassroomId: int, classTeacherId
       cursor = db.cursor()
       cursor.execute('INSERT INTO classes(startYear, rootClassroomId, courseId, classTeacherId, groupNumber) VALUES(?, ?, ?, ?, ?);', (startYear, rootClassroomId, courseId, classTeacherId, groupNumber))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a class; Error message: {e}; Data: {(startYear, rootClassroomId, courseId, classTeacherId, groupNumber)}')
+    logger.log(f'An error in SQL syntax occurred while adding a class; Error message: ({e.sqlite_errorcode}) {e}; Data: {(startYear, rootClassroomId, courseId, classTeacherId, groupNumber)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a class; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [id, courseStrID, startYear, groupNumber, classTeacherId, rootClassroomId]
 def getAllClasses() -> list[int, str, int, int, int, int]:
@@ -523,7 +543,7 @@ def getAllClasses() -> list[int, str, int, int, int, int]:
     db.commit()
     return classes
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all classes; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while getting all classes; Error message: ({e.sqlite_errorcode}) {e};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all classes; Error message: {e}')
   db.commit()
@@ -541,7 +561,7 @@ def getAllClassesWithTeacher(classTeacherId: int) -> list[int, str, int, int, in
     db.commit()
     return classes
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all classes; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while getting all classes; Error message: ({e.sqlite_errorcode}) {e};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all classes; Error message: {e}')
   db.commit()
@@ -555,11 +575,13 @@ def addStudent(personId: int, classId: int, half: str):
       cursor = db.cursor()
       cursor.execute('INSERT INTO students(personId, classId, half) VALUES(?, ?, ?);', (personId, classId, half))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a student; Error message: {e}; Data: {(personId, classId, half)}')
+    logger.log(f'An error in SQL syntax occurred while adding a student; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, classId, half)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a student; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [id, fname, lname, half]
 def getAllStudentsWithClassHalf(classId: int, half: str=None) -> list[int, str, str, str]:
@@ -576,7 +598,7 @@ def getAllStudentsWithClassHalf(classId: int, half: str=None) -> list[int, str, 
     db.commit()
     return students
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all students; Error message: {e}; Data: {(classId, half)}')
+    logger.log(f'An error in SQL syntax occurred while getting all students; Error message: ({e.sqlite_errorcode}) {e}; Data: {(classId, half)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all students; Error message: {e}')
   db.commit()
@@ -590,11 +612,13 @@ def addSubject(name: str, strIdentifier: str):
       cursor = db.cursor()
       cursor.execute('INSERT INTO subjects(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a subject; Error message: {e}; Data: {(name, strIdentifier)}')
+    logger.log(f'An error in SQL syntax occurred while adding a subject; Error message: ({e.sqlite_errorcode}) {e}; Data: {(name, strIdentifier)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a subject; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [id, name, strID]
 def getAllSubjects() -> list[int, str, str]:
@@ -606,7 +630,7 @@ def getAllSubjects() -> list[int, str, str]:
     db.commit()
     return subjects
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all subjects; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while getting all subjects; Error message: ({e.sqlite_errorcode}) {e};')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all subjects; Error message: {e}')
   db.commit()
@@ -620,11 +644,13 @@ def addTeacherSubjectExpertise(teacherId: int, subjectId: int):
       cursor = db.cursor()
       cursor.execute('INSERT INTO teachersSubjectsExpertise(teacherId, subjectId) VALUES(?, ?);', (teacherId, subjectId))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding a teacher subject; Error message: {e}; Data: {(teacherId, subjectId)}')
+    logger.log(f'An error in SQL syntax occurred while adding a teacher subject; Error message: ({e.sqlite_errorcode}) {e}; Data: {(teacherId, subjectId)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding a teacher subject; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [id, strID]
 def getAllExpertiseWithTeacher(teacherId: int) -> list[int, str]:
@@ -638,7 +664,7 @@ def getAllExpertiseWithTeacher(teacherId: int) -> list[int, str]:
     db.commit()
     return expertise
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all expertise(t); Error message: {e}; Data: {(teacherId)}')
+    logger.log(f'An error in SQL syntax occurred while getting all expertise(t); Error message: ({e.sqlite_errorcode}) {e}; Data: {(teacherId)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all expertise(t); Error message: {e}')
   db.commit()
@@ -656,7 +682,7 @@ def getAllExpertiseWithSubject(subjectId: int) -> list[int, str]:
     db.commit()
     return expertise
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting all expertise(s); Error message: {e}; Data: {(subjectId)}')
+    logger.log(f'An error in SQL syntax occurred while getting all expertise(s); Error message: ({e.sqlite_errorcode}) {e}; Data: {(subjectId)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting all expertise(s); Error message: {e}')
   db.commit()
@@ -672,11 +698,13 @@ def initializeDaysInWeek():
     for i, d in enumerate(days):
       cursor.execute('INSERT OR IGNORE INTO daysInWeek(id, name) VALUES(?, ?)', (i, d))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while initializing daysInWeek; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while initializing daysInWeek; Error message: ({e.sqlite_errorcode}) {e};')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while initializing daysInWeek; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 
 def addLectureTime(lectureId: int, time: datetime.datetime):
@@ -685,11 +713,13 @@ def addLectureTime(lectureId: int, time: datetime.datetime):
     cursor = db.cursor()
     cursor.execute('INSERT INTO lectureTimes(id, startTime) VALUES(?, ?)', (lectureId, time))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding lectureTime; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while adding lectureTime; Error message: ({e.sqlite_errorcode}) {e};')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding lectureTime; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 
 def initializeLectures():
@@ -705,11 +735,13 @@ def initializeLectures():
         for t in times:
           cursor.execute('INSERT OR IGNORE INTO lectures(isEvenWeek, dayId, timeId) VALUES(?, ?, ?)', (evenWeek, d[0], t[0]))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while initializing lectures; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while initializing lectures; Error message: ({e.sqlite_errorcode}) {e};')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while initializing lectures; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [id, day, time, isevenweek]
 def getAllLectures() -> list[int, str, datetime.datetime, bool]:
@@ -741,11 +773,13 @@ def addScheduleSingle(lectureId: int, classId: int, teacherId: int, subjectId: i
     cursor = db.cursor()
     cursor.execute('INSERT INTO schedules(lectureId, classId, teacherId, subjectId, classroomId, FullORAB) VALUES(?, ?, ?, ?, ?, ?)', (lectureId, classId, teacherId, subjectId, classroomId, FullORAB))
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while adding schedule single; Error message: {e};')
+    logger.log(f'An error in SQL syntax occurred while adding schedule single; Error message: ({e.sqlite_errorcode}) {e};')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while adding schedule single; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
 # [lectureId, day, timeId, time, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
 def getScheduleForClass(classId: int):
@@ -862,14 +896,14 @@ def logInUser(username, password):
     else:
       logger.log(f'Unknown username: {username}', 2)
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while logging in a user; Error message: {e}; Data: {(username, password)}')
+    logger.log(f'An error in SQL syntax occurred while logging in a user; Error message: ({e.sqlite_errorcode}) {e}; Data: {(username, password)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while logging in a user; Error message: {e}')
   db.commit()
   return -1, ''
 
 
-# Return True if Username was found in table
+# return 0 if Username was found in table
 def checkIfUsernameExists(username):
   try:
     db = getDBConn()
@@ -882,7 +916,7 @@ def checkIfUsernameExists(username):
       return True
     return False
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while checking if a username already exists; Error message: {e}; Data: {(username)}')
+    logger.log(f'An error in SQL syntax occurred while checking if a username already exists; Error message: ({e.sqlite_errorcode}) {e}; Data: {(username)}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while checking if a username already exists; Error message: {e}')
   db.commit()
@@ -903,48 +937,16 @@ def removeUser(ix):
       # If we were unable to find the id in accounts, we log it as a warning
       logger.log(f'Recieved remove request for id({ix}), however requested row is not present in accounts table aborting', 2)
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while removing a user; Error message: {e}; Data: {(ix)}')
+    logger.log(f'An error in SQL syntax occurred while removing a user; Error message: ({e.sqlite_errorcode}) {e}; Data: {(ix)}')
+    db.commit()
+    return e.sqlite_errorcode
   except Exception as e:
     logger.log(f'An unexpected error occurred while removing a user; Error message: {e}')
   db.commit()
-  return True
+  return 0
 
-initialize()
-addBuilding('Skalka', 'SKA')
-addClassroom(26, 15, 1)
-addClassroom(27, 15, 1)
-addClassroom(28, 15, 1)
-addCourse('Truhlar', 'T')
-addRole('Student')
-addRole('Teacher')
-addPerson(123, 1, 'jarda', 'pravda')
-addPerson(124, 2, 'mike', 'pravda')
-addPerson(125, 1, 'mike', 'lost')
-addPerson(126, 2, 'jarda', 'pravda')
-addEmployee(2)
-addEmployee(4, 2)
-addTeacher(2, datetime.date(2014, 9, 1), 'PRM')
-addTeacher(4, datetime.date(2018, 9, 1), 'PRJ')
-addClass(1, 2023, 1, 2, 1)
-addStudent(1, 1, 'A')
-addStudent(2, 1, 'B')
-addSubject('Programming', 'PRG')
-addSubject('Database applications', 'DBA')
-addTeacherSubjectExpertise(2, 1)
-addTeacherSubjectExpertise(2, 2)
-addTeacherSubjectExpertise(4, 1)
-initializeDaysInWeek()
-addLectureTime(0, datetime.datetime(2000, 10, 10, 7, 10, 0))
-addLectureTime(1, datetime.datetime(2000, 10, 10, 8, 0, 0))
-addLectureTime(2, datetime.datetime(2000, 10, 10, 8, 50, 0))
-addLectureTime(3, datetime.datetime(2000, 10, 10, 9, 45, 0))
-addLectureTime(4, datetime.datetime(2000, 10, 10, 10, 50, 0))
-addLectureTime(5, datetime.datetime(2000, 10, 10, 11, 40, 0))
-addLectureTime(6, datetime.datetime(2000, 10, 10, 12, 30, 0))
-initializeLectures()
-addScheduleSingle(2, 1, 2, 1, 1, 'F')
-addScheduleSingle(4, 1, 2, 2, 1, 'A')
-addScheduleSingle(4, 1, 4, 1, 3, 'B')
-addScheduleSingle(12, 1, 2, 1, 2, 'F')
-print(getScheduleForClass(1), getScheduleForTeacher(2), getScheduleForTeacher(4), getScheduleForClassroom(1), getScheduleForClassroom(2), getScheduleForClassroom(3), sep='\n')
-input()
+# initialize/DaysInWeek/Roles
+def initializeAll():
+  initialize()
+  initializeDaysInWeek()
+  initializeRoles()
