@@ -149,6 +149,40 @@ def flask_createClassroom():
     return {'status': 200}
   return {'status': 403}
 
+@app.route('/createCourse', methods=['POST'])
+def flask_createCourse():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 403})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 401}
+    name = request.json['name']
+    strId = request.json['strId']
+    dbHandler.addCourse(name, strId)
+    return {'status': 200}
+  return {'status': 403}
+
+@app.route('/createRole', methods=['POST'])
+def flask_createRole():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 403})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 401}
+    role = request.json['role']
+    dbHandler.addRole(role)
+    return {'status': 200}
+  return {'status': 403}
 
 
 def main():
