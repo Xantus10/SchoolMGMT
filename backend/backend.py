@@ -24,7 +24,7 @@ def flask_login():
     # Call to DB
     uid, role = dbHandler.logInUser(username, password)
     # If login unsuccessful
-    if uid == -1: return {'status': 403}
+    if uid == -1: return {'status': 401}
     # Make response
     resp = make_response({'status': 200})
     # Data for JWT token
@@ -35,7 +35,7 @@ def flask_login():
     resp.set_cookie('JWT_token', JWT_token, expires=expires, domain='localhost')
     resp.set_cookie('JWT_user_context', JWT_user_context, httponly=True, samesite='Strict', expires=expires)
     return resp
-  return{'status': 403}
+  return{'status': 401}
 
 
 @app.route('/checkUsername')
@@ -51,11 +51,11 @@ def flask_getRoles():
   JWT_user_context = request.cookies.get('JWT_user_context')
   isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
   if not isValid:
-    resp = make_response({'status': 403})
+    resp = make_response({'status': 401})
     resp.delete_cookie('JWT_token')
     resp.delete_cookie('JWT_user_context')
     return resp
-  if data['role'] != 'admin': {'status': 401}
+  if data['role'] != 'admin': {'status': 403}
   roles = dbHandler.getAllRoles()
   return {'status': 200, 'roles': roles}
 
@@ -66,18 +66,27 @@ def flask_createPerson():
     JWT_user_context = request.cookies.get('JWT_user_context')
     isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
     if not isValid:
-      resp = make_response({'status': 403})
+      resp = make_response({'status': 401})
       resp.delete_cookie('JWT_token')
       resp.delete_cookie('JWT_user_context')
       return resp
-    if data['role'] != 'admin': {'status': 401}
+    if data['role'] != 'admin': {'status': 403}
     fname = request.json['firstName']
     lname = request.json['lastName']
     birthNum = int(request.json['birthNumber'].replace('/', ''))
     roleId = request.json['roleId']
-    dbHandler.addPerson(birthNum, roleId, fname, lname)
-    return {'status': 200}
-  return {'status': 403}
+    code = dbHandler.addPerson(birthNum, roleId, fname, lname)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case 2067:
+        msg = 'Birth number already in use!'
+      case 787:
+        msg = 'Invalid role!'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
 
 @app.route('/createAccount', methods=['POST'])
 def flask_createAccount():
@@ -86,17 +95,29 @@ def flask_createAccount():
     JWT_user_context = request.cookies.get('JWT_user_context')
     isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
     if not isValid:
-      resp = make_response({'status': 403})
+      resp = make_response({'status': 401})
       resp.delete_cookie('JWT_token')
       resp.delete_cookie('JWT_user_context')
       return resp
-    if data['role'] != 'admin': {'status': 401}
+    if data['role'] != 'admin': {'status': 403}
     username = request.json['username']
     password = request.json['password']
-    birthNumber = dbHandler.getPersonByBirthNumber(int(request.json['birthNumber'].replace('/', '')))[0]
-    dbHandler.addAccount(birthNumber, username, password)
-    return {'status': 200}
-  return {'status': 403}
+    birthNumber = dbHandler.getPersonByBirthNumber(int(request.json['birthNumber'].replace('/', '')))
+    birthNumber = birthNumber[0] if birthNumber else -1
+    code = dbHandler.addAccount(birthNumber, username, password)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case 2067:
+        msg = 'Username already in use!'
+      case 1555:
+        msg = 'Person already owns an account'
+      case 787:
+        msg = 'Person for provided birth number was not found!'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
 
 @app.route('/createBuilding', methods=['POST'])
 def flask_createBuilding():
@@ -105,16 +126,23 @@ def flask_createBuilding():
     JWT_user_context = request.cookies.get('JWT_user_context')
     isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
     if not isValid:
-      resp = make_response({'status': 403})
+      resp = make_response({'status': 401})
       resp.delete_cookie('JWT_token')
       resp.delete_cookie('JWT_user_context')
       return resp
-    if data['role'] != 'admin': {'status': 401}
+    if data['role'] != 'admin': {'status': 403}
     name = request.json['name']
     strId = request.json['strId']
-    dbHandler.addBuilding(name, strId)
-    return {'status': 200}
-  return {'status': 403}
+    code = dbHandler.addBuilding(name, strId)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case 2067:
+        msg = 'Building name or strID already exists!'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
 
 @app.route('/getBuildings')
 def flask_getBuildings():
@@ -122,11 +150,11 @@ def flask_getBuildings():
   JWT_user_context = request.cookies.get('JWT_user_context')
   isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
   if not isValid:
-    resp = make_response({'status': 403})
+    resp = make_response({'status': 401})
     resp.delete_cookie('JWT_token')
     resp.delete_cookie('JWT_user_context')
     return resp
-  if data['role'] != 'admin': {'status': 401}
+  if data['role'] != 'admin': {'status': 403}
   buildings = dbHandler.getAllBuildings()
   return {'status': 200, 'buildings': buildings}
 
@@ -137,17 +165,26 @@ def flask_createClassroom():
     JWT_user_context = request.cookies.get('JWT_user_context')
     isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
     if not isValid:
-      resp = make_response({'status': 403})
+      resp = make_response({'status': 401})
       resp.delete_cookie('JWT_token')
       resp.delete_cookie('JWT_user_context')
       return resp
-    if data['role'] != 'admin': {'status': 401}
+    if data['role'] != 'admin': {'status': 403}
     number = request.json['number']
     capacity = request.json['capacity']
     buildingId = request.json['buildingId']
-    dbHandler.addClassroom(number, capacity, buildingId)
-    return {'status': 200}
-  return {'status': 403}
+    code = dbHandler.addClassroom(number, capacity, buildingId)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case 2067:
+        msg = 'Classroom with specified number already exists in building!'
+      case 787:
+        msg = 'Invalid building provided!'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
 
 @app.route('/createCourse', methods=['POST'])
 def flask_createCourse():
@@ -156,16 +193,23 @@ def flask_createCourse():
     JWT_user_context = request.cookies.get('JWT_user_context')
     isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
     if not isValid:
-      resp = make_response({'status': 403})
+      resp = make_response({'status': 401})
       resp.delete_cookie('JWT_token')
       resp.delete_cookie('JWT_user_context')
       return resp
-    if data['role'] != 'admin': {'status': 401}
+    if data['role'] != 'admin': {'status': 403}
     name = request.json['name']
     strId = request.json['strId']
-    dbHandler.addCourse(name, strId)
-    return {'status': 200}
-  return {'status': 403}
+    code = dbHandler.addCourse(name, strId)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case 2067:
+        msg = 'Course name or strID already exists!'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
 
 @app.route('/createRole', methods=['POST'])
 def flask_createRole():
@@ -174,15 +218,22 @@ def flask_createRole():
     JWT_user_context = request.cookies.get('JWT_user_context')
     isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
     if not isValid:
-      resp = make_response({'status': 403})
+      resp = make_response({'status': 401})
       resp.delete_cookie('JWT_token')
       resp.delete_cookie('JWT_user_context')
       return resp
-    if data['role'] != 'admin': {'status': 401}
-    role = request.json['role']
-    dbHandler.addRole(role)
-    return {'status': 200}
-  return {'status': 403}
+    if data['role'] != 'admin': {'status': 403}
+    role = request.json['role'].lower()
+    code = dbHandler.addRole(role)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case 2067:
+        msg = 'Role already exists!'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
 
 
 def main():
