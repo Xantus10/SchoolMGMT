@@ -29,7 +29,20 @@ function AddAccount() {
     }
     axios.post(process.env.REACT_APP_BE_ADDR+'/createAccount', form.getValues(), {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        setStatus('Done!')
+        switch (resp.data.status) {
+          case 200:
+            setStatus('Done!')
+            break;
+          case 401:
+            setStatus('You are not logged in or your session has expired!')
+            break;
+          case 403:
+            setStatus('You do not have sufficient privileges for this operation!')
+            break;
+          case 500:
+            setStatus(resp.data.msg)
+            break;
+        }
       }
     )
   }
