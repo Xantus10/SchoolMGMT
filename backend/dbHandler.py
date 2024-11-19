@@ -42,7 +42,7 @@ def initialize():
   try:
     db = getDBConn()
     cursor = db.cursor()
-    cursor.execute('CREATE TABLE IF NOT EXISTS buildings(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, strIdentifier  NOT NULL UNIQUE);')
+    cursor.execute('CREATE TABLE IF NOT EXISTS buildings(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, strIdentifier NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS classrooms(id INTEGER PRIMARY KEY AUTOINCREMENT, number INTEGER NOT NULL, capacity INTEGER NOT NULL, buildingId INTEGER NOT NULL, CONSTRAINT FK_classrooms_buildingId FOREIGN KEY (buildingId) REFERENCES buildings(id), CONSTRAINT U_classrooms_number_buildingId UNIQUE (number, buildingId));')
     cursor.execute('CREATE TABLE IF NOT EXISTS courses(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, strIdentifier TEXT NOT NULL UNIQUE);')
     cursor.execute('CREATE TABLE IF NOT EXISTS roles(id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL UNIQUE);')
@@ -473,6 +473,32 @@ def getAllEmployeesWithSupervisor(supervisorId: int) -> list[int, str, str, str]
     return person
   except sqlite3.Error as e:
     logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {supervisorId}')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+  db.commit()
+  return []
+
+def getAllEmployeesWithName(firstName: str='', lastName: str='') -> list[list[int, int, str, str, str]]:
+  try:
+    if not firstName and not lastName: return []
+    db = getDBConn()
+    cursor = db.cursor()
+    data = ()
+    if firstName and lastName:
+      data = (firstName, lastName)
+    else:
+      data = (firstName,) if firstName else (lastName,)
+    person = cursor.execute(f'''SELECT people.id, people.birthNumber, roles.role, fn.name, ln.name FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN roles ON roles.id=people.roleId
+                                                JOIN employees ON employees.personId=people.id
+                                                WHERE {"fn.name=?" if firstName else ""} {"AND" if firstName and lastName else ""} {"ln.name=?" if lastName else ""};''', data)
+    person = person.fetchall()
+    db.commit()
+    return person
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {firstName, lastName}')
   except Exception as e:
     logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
   db.commit()

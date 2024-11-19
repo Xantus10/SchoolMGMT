@@ -71,8 +71,8 @@ def flask_createPerson():
       resp.delete_cookie('JWT_user_context')
       return resp
     if data['role'] != 'admin': {'status': 403}
-    fname = request.json['firstName']
-    lname = request.json['lastName']
+    fname = request.json['firstName'].capitalize()
+    lname = request.json['lastName'].capitalize()
     birthNum = int(request.json['birthNumber'].replace('/', ''))
     roleId = request.json['roleId']
     code = dbHandler.addPerson(birthNum, roleId, fname, lname)
@@ -230,6 +230,72 @@ def flask_createRole():
     match (code):
       case 2067:
         msg = 'Role already exists!'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
+@app.route('/getPeopleByNames')
+def flask_getPeopleByNames():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  fn = request.args.get('firstName')
+  ln = request.args.get('lastName')
+  fn = fn.capitalize() if fn else None
+  ln = ln.capitalize() if ln else None
+  people = dbHandler.getAllPeopleWithName(fn, ln)
+  return {'status': 200, 'people': people}
+
+@app.route('/getEmployeesByNames')
+def flask_getEmployeesByNames():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  fn = request.args.get('firstName')
+  ln = request.args.get('lastName')
+  fn = fn.capitalize() if fn else None
+  ln = ln.capitalize() if ln else None
+  employees = dbHandler.getAllEmployeesWithName(fn, ln)
+  return {'status': 200, 'employees': employees}
+
+@app.route('/createEmployee', methods=['POST'])
+def flask_createEmployee():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    personId = request.json['personId']
+    withSupervisor = request.json['withSupervisor']
+    supervisorId = request.json['supervisorId'] if withSupervisor else None
+    code = dbHandler.addEmployee(personId, supervisorId)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case 1555:
+        msg = 'Person is already an employee'
+      case 787:
+        msg = 'Person was not found or selected supervisor is not an employee'
+      case 275:
+        msg = 'Person cannot have itself as a supervisor, uncheck "has supervisor" for a person without supervisor'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
     return {'status': 500, 'msg': msg}
