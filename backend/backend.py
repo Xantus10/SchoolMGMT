@@ -79,9 +79,9 @@ def flask_createPerson():
     if code == 0: return {'status': 200}
     msg = ''
     match (code):
-      case 2067:
+      case dbHandler.ERR_UNIQUE:
         msg = 'Birth number already in use!'
-      case 787:
+      case dbHandler.ERR_FK:
         msg = 'Invalid role!'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
@@ -108,11 +108,11 @@ def flask_createAccount():
     if code == 0: return {'status': 200}
     msg = ''
     match (code):
-      case 2067:
+      case dbHandler.ERR_UNIQUE:
         msg = 'Username already in use!'
-      case 1555:
+      case dbHandler.ERR_PK:
         msg = 'Person already owns an account'
-      case 787:
+      case dbHandler.ERR_FK:
         msg = 'Person for provided birth number was not found!'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
@@ -137,7 +137,7 @@ def flask_createBuilding():
     if code == 0: return {'status': 200}
     msg = ''
     match (code):
-      case 2067:
+      case dbHandler.ERR_UNIQUE:
         msg = 'Building name or strID already exists!'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
@@ -177,9 +177,9 @@ def flask_createClassroom():
     if code == 0: return {'status': 200}
     msg = ''
     match (code):
-      case 2067:
+      case dbHandler.ERR_UNIQUE:
         msg = 'Classroom with specified number already exists in building!'
-      case 787:
+      case dbHandler.ERR_FK:
         msg = 'Invalid building provided!'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
@@ -204,7 +204,7 @@ def flask_createCourse():
     if code == 0: return {'status': 200}
     msg = ''
     match (code):
-      case 2067:
+      case dbHandler.ERR_UNIQUE:
         msg = 'Course name or strID already exists!'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
@@ -228,7 +228,7 @@ def flask_createRole():
     if code == 0: return {'status': 200}
     msg = ''
     match (code):
-      case 2067:
+      case dbHandler.ERR_UNIQUE:
         msg = 'Role already exists!'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
@@ -290,12 +290,44 @@ def flask_createEmployee():
     if code == 0: return {'status': 200}
     msg = ''
     match (code):
-      case 1555:
+      case dbHandler.ERR_PK:
         msg = 'Person is already an employee'
-      case 787:
+      case dbHandler.ERR_FK:
         msg = 'Person was not found or selected supervisor is not an employee'
-      case 275:
+      case dbHandler.ERR_CHECK:
         msg = 'Person cannot have itself as a supervisor, uncheck "has supervisor" for a person without supervisor'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
+@app.route('/createTeacher', methods=['POST'])
+def flask_createTeacher():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    personId = request.json['personId']
+    strId = request.json['strId']
+    strId = strId.upper() if strId else None
+    teachingFrom = request.json['teachingFrom']
+    teachingFrom = teachingFrom[0:10] if teachingFrom else None
+    code = dbHandler.addTeacher(personId, teachingFrom, strId)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case dbHandler.ERR_UNIQUE:
+        msg = 'Identificator already exists'
+      case dbHandler.ERR_PK:
+        msg = 'Person is already a teacher'
+      case dbHandler.ERR_FK:
+        msg = 'Person is not an employee'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
     return {'status': 500, 'msg': msg}

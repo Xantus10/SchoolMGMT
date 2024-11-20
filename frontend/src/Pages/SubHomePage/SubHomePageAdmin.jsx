@@ -7,6 +7,7 @@ import AddClassroom from '../../HomePageModules/AddClassroom.jsx';
 import AddCourse from '../../HomePageModules/AddCourse.jsx';
 import AddRole from '../../HomePageModules/AddRole.jsx';
 import AddEmployee from '../../HomePageModules/AddEmployee.jsx';
+import AddTeacher from '../../HomePageModules/AddTeacher.jsx';
 
 
 function SubHomePageAdmin({setContent}) {
@@ -37,6 +38,9 @@ function SubHomePageAdmin({setContent}) {
           </Menu.Item>
           <Menu.Item onClick={e => setContent(<AddEmployee />)}>
             <Text>Add employee</Text>
+          </Menu.Item>
+          <Menu.Item onClick={e => setContent(<AddTeacher />)}>
+            <Text>Add teacher</Text>
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
