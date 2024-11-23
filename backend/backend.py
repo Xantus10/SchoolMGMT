@@ -301,6 +301,22 @@ def flask_createEmployee():
     return {'status': 500, 'msg': msg}
   return {'status': 401}
 
+@app.route('/getTeacherByStrId')
+def flask_getTeacherByStrId():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  sid = request.args.get('strId')
+  sid = sid.upper() if sid else None
+  teacher = dbHandler.getTeacherByStrId(sid)
+  return {'status': 200, 'teacher': teacher}
+
 @app.route('/createTeacher', methods=['POST'])
 def flask_createTeacher():
   if request.method == 'POST':
@@ -328,6 +344,68 @@ def flask_createTeacher():
         msg = 'Person is already a teacher'
       case dbHandler.ERR_FK:
         msg = 'Person is not an employee'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
+@app.route('/getCourses')
+def flask_getCourses():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  courses = dbHandler.getAllCourses()
+  return {'status': 200, 'courses': courses}
+
+@app.route('/getClassroomId')
+def flask_getClassrooms():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  buildingId = request.args.get('buildingId')
+  classroomNumber = request.args.get('classroomNumber')
+  classroom = dbHandler.getClassroomId(classroomNumber, buildingId)
+  return {'status': 200, 'classroom': classroom}
+
+@app.route('/createClass', methods=['POST'])
+def flask_createClass():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    courseId = request.json['courseId']
+    startYear = request.json['startYear']
+    rootClassroomId = request.json['rootClassroomId']
+    classTeacherId = request.json['classTeacherId']
+    groupNumber = request.json['groupNumber'] if request.json['groupNumber'] in (1, 2) else None
+    code = dbHandler.addClass(courseId, startYear, rootClassroomId, classTeacherId, groupNumber)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case dbHandler.ERR_UNIQUE:
+        msg = 'Class already exists OR classroom is already occupied'
+      case dbHandler.ERR_FK:
+        msg = 'Person is not employee OR classroom does not exist'
+      case dbHandler.ERR_CHECK:
+        msg = 'Start year must be between 2000 and 9999'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
     return {'status': 500, 'msg': msg}

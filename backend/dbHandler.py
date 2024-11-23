@@ -309,9 +309,9 @@ def getPersonByBirthNumber(birthNumber: int) -> list[int, str, str, str]:
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {birthNumber}')
+    logger.log(f'An error in SQL syntax occurred while getting person(bn); Error message: ({e.sqlite_errorcode}) {e}; Data: {birthNumber}')
   except Exception as e:
-    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+    logger.log(f'An unexpected error occurred while getting person(bn); Error message: {e}')
   db.commit()
   return []
 
@@ -329,9 +329,9 @@ def getPersonById(pid: int) -> list[int, str, str, str]:
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {pid}')
+    logger.log(f'An error in SQL syntax occurred while getting person(id); Error message: ({e.sqlite_errorcode}) {e}; Data: {pid}')
   except Exception as e:
-    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+    logger.log(f'An unexpected error occurred while getting person(id); Error message: {e}')
   db.commit()
   return []
 
@@ -343,21 +343,21 @@ def getAllPeopleWithName(firstName: str='', lastName: str='') -> list[list[int, 
     cursor = db.cursor()
     data = ()
     if firstName and lastName:
-      data = (firstName, lastName)
+      data = (firstName+'%', lastName+'%')
     else:
-      data = (firstName,) if firstName else (lastName,)
+      data = (firstName+'%',) if firstName else (lastName+'%',)
     person = cursor.execute(f'''SELECT people.id, people.birthNumber, roles.role, fn.name, ln.name FROM people
                                                 JOIN names fn ON fn.id=people.firstNameId
                                                 JOIN names ln ON ln.id=people.lastNameId
                                                 JOIN roles ON roles.id=people.roleId
-                                                WHERE {"fn.name=?" if firstName else ""} {"AND" if firstName and lastName else ""} {"ln.name=?" if lastName else ""};''', data)
+                                                WHERE {"fn.name LIKE ?" if firstName else ""} {"AND" if firstName and lastName else ""} {"ln.name LIKE ?" if lastName else ""};''', data)
     person = person.fetchall()
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {firstName, lastName}')
+    logger.log(f'An error in SQL syntax occurred while getting all people by role; Error message: ({e.sqlite_errorcode}) {e}; Data: {firstName, lastName}')
   except Exception as e:
-    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+    logger.log(f'An unexpected error occurred while getting all people by name; Error message: {e}')
   db.commit()
   return []
 
@@ -375,9 +375,9 @@ def getAllPeopleWithRole(role: str) -> list[list[int, int, str, str]]:
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {role}')
+    logger.log(f'An error in SQL syntax occurred while getting all people by role; Error message: ({e.sqlite_errorcode}) {e}; Data: {role}')
   except Exception as e:
-    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+    logger.log(f'An unexpected error occurred while getting all people by role; Error message: {e}')
   db.commit()
   return []
 
@@ -479,9 +479,9 @@ def getAllEmployeesWithSupervisor(supervisorId: int) -> list[int, str, str, str]
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {supervisorId}')
+    logger.log(f'An error in SQL syntax occurred while getting all employees by supervisor; Error message: ({e.sqlite_errorcode}) {e}; Data: {supervisorId}')
   except Exception as e:
-    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+    logger.log(f'An unexpected error occurred while getting all employees by supervisor; Error message: {e}')
   db.commit()
   return []
 
@@ -492,22 +492,22 @@ def getAllEmployeesWithName(firstName: str='', lastName: str='') -> list[list[in
     cursor = db.cursor()
     data = ()
     if firstName and lastName:
-      data = (firstName, lastName)
+      data = (firstName+'%', lastName+'%')
     else:
-      data = (firstName,) if firstName else (lastName,)
+      data = (firstName+'%',) if firstName else (lastName+'%',)
     person = cursor.execute(f'''SELECT people.id, people.birthNumber, roles.role, fn.name, ln.name FROM people
                                                 JOIN names fn ON fn.id=people.firstNameId
                                                 JOIN names ln ON ln.id=people.lastNameId
                                                 JOIN roles ON roles.id=people.roleId
                                                 JOIN employees ON employees.personId=people.id
-                                                WHERE {"fn.name=?" if firstName else ""} {"AND" if firstName and lastName else ""} {"ln.name=?" if lastName else ""};''', data)
+                                                WHERE {"fn.name LIKE ?" if firstName else ""} {"AND" if firstName and lastName else ""} {"ln.name LIKE ?" if lastName else ""};''', data)
     person = person.fetchall()
     db.commit()
     return person
   except sqlite3.Error as e:
-    logger.log(f'An error in SQL syntax occurred while getting person; Error message: ({e.sqlite_errorcode}) {e}; Data: {firstName, lastName}')
+    logger.log(f'An error in SQL syntax occurred while getting all employees by name; Error message: ({e.sqlite_errorcode}) {e}; Data: {firstName, lastName}')
   except Exception as e:
-    logger.log(f'An unexpected error occurred while getting person; Error message: {e}')
+    logger.log(f'An unexpected error occurred while getting all employees by name; Error message: {e}')
   db.commit()
   return []
 
@@ -549,6 +549,25 @@ def getAllTeachers() -> list[int, str, str, str, datetime.datetime]:
   db.commit()
   return []
 
+# [id, fname, lname, teachFrom]
+def getTeacherByStrId(strId: str) -> list[int, str, str, datetime.datetime]:
+  try:
+    db = getDBConn()
+    cursor = db.cursor()
+    teachers = cursor.execute('''SELECT people.id, fn.name, ln.name, teachers.teachingFrom FROM people
+                                                JOIN names fn ON fn.id=people.firstNameId
+                                                JOIN names ln ON ln.id=people.lastNameId
+                                                JOIN teachers ON teachers.personId=people.id
+                                                WHERE teachers.strIdentifier=?;''', (strId,))
+    teachers = teachers.fetchone()
+    db.commit()
+    return teachers
+  except sqlite3.Error as e:
+    logger.log(f'An error in SQL syntax occurred while getting a teacher; Error message: ({e.sqlite_errorcode}) {e};')
+  except Exception as e:
+    logger.log(f'An unexpected error occurred while getting a teacher; Error message: {e}')
+  db.commit()
+  return []
 
 
 def addClass(courseId: int, startYear: int, rootClassroomId: int, classTeacherId: int, groupNumber: int=None):
