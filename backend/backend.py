@@ -411,6 +411,13 @@ def flask_createClass():
     return {'status': 500, 'msg': msg}
   return {'status': 401}
 
+@app.route('/logout', methods=['POST'])
+def flask_logout():
+  if request.method == 'POST':
+    resp = make_response({'status': 200})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
 
 def main():
   dbHandler.initializeAll()

@@ -25,7 +25,7 @@ function LoginForm() {
             setStatus(<>OK Redirecting... <a href="/home">Click here if you are not redirected</a></>)
             window.location.href = '/home'
             break;
-          case 403:
+          case 401:
             setStatus('Incorrect username or password!')
             break;
           default:

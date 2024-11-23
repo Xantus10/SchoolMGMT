@@ -1,15 +1,22 @@
 import React, { useState } from 'react'
-import { Stack, Box, Title, Text, Group } from '@mantine/core'
+import { Stack, Box, Title, Text, Group, Button } from '@mantine/core'
+import { useIdle } from '@mantine/hooks'
 import Cookies from 'js-cookie'
 
 import SubHomePageAdmin from './SubHomePage/SubHomePageAdmin.jsx'
 import SubHomePageTeacher from './SubHomePage/SubHomePageTeacher.jsx'
 import SubHomePageStudent from './SubHomePage/SubHomePageStudent.jsx'
 import SubHomePageNotFound from './SubHomePage/SubHomePageNotFound.jsx'
+import axios from 'axios'
 
 
 function HomePage() {
   const [content, setContent] = useState(<></>)
+  const idle = useIdle(600000, { initialState: false })
+
+  if (Cookies.get('JWT_token') === undefined) {
+    window.location.href = '/'
+  }
 
   let token = JSON.parse(atob(Cookies.get('JWT_token').split('.')[0]))
   let moduleBar = <></>
@@ -27,12 +34,23 @@ function HomePage() {
       moduleBar = <SubHomePageNotFound setContent={setContent} />
       break;
   }
+
+  function logout() {
+    axios.post(process.env.REACT_APP_BE_ADDR+'/logout', {}, {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
+      (resp) => {
+        window.location.href = '/'
+      })
+  }
+
 // header modulebar content footer
   return (
     <>
     <Stack h={"100vh"}>
       <Box h={"10vh"} bg={"cyan.6"} p={20}>
-        <Title c={"gray.0"}>SchoolMGMT</Title>
+        <Group>
+          <Title c={"gray.0"}>SchoolMGMT</Title>
+          <Button bg={'red.9'} ml="auto" onClick={logout}>Logout</Button>
+        </Group>
       </Box>
       <Box h={"5vh"} bg={'cyan.2'} pl={10}>
         {moduleBar}
@@ -47,6 +65,7 @@ function HomePage() {
         </Group>
       </Box>
     </Stack>
+    {idle ? logout() : <></>}
     </>
   )
 }
