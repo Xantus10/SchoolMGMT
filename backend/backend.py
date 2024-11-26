@@ -411,6 +411,51 @@ def flask_createClass():
     return {'status': 500, 'msg': msg}
   return {'status': 401}
 
+@app.route('/getClasses')
+def flask_getClasses():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  classes = dbHandler.getAllClasses()
+  return {'status': 200, 'classes': classes}
+
+@app.route('/createStudent', methods=['POST'])
+def flask_createStudent():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    personId = request.json['personId']
+    classId = request.json['classId']
+    half = request.json['half']
+    code = dbHandler.addStudent(personId, classId, half)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case dbHandler.ERR_PK:
+        msg = 'Person is already a student'
+      case dbHandler.ERR_FK:
+        msg = 'Person or class do not exist'
+      case dbHandler.ERR_CHECK:
+        msg = 'Half must be either \'A\' or \'B\''
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
+
 @app.route('/logout', methods=['POST'])
 def flask_logout():
   if request.method == 'POST':
