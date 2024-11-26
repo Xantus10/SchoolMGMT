@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form';
-import { Stack, NativeSelect, Button, Group, Title, Text, Checkbox, TextInput } from '@mantine/core';
+import { Stack, NativeSelect, Button, Group, Title, TextInput } from '@mantine/core';
+import { notifications } from '@mantine/notifications'
+import { BiCheckCircle, BiErrorAlt } from "react-icons/bi";
 
 function AddStudent() {
   const form = useForm({
@@ -13,7 +15,6 @@ function AddStudent() {
     }
   })
 
-  const [status, setStatus] = useState('')
   const [pFirstName, setPFirstName] = useState('')
   const [pLastName, setPLastName] = useState('')
   const [peopleList, setPeopleList] = useState([])
@@ -30,9 +31,19 @@ function AddStudent() {
             form.setFieldValue('personId', resp.data.people[0][0])
             break;
           case 401:
-            setStatus('Unauthorized')
+            notifications.show({
+              title: 'Unauthorized',
+              message: '',
+              color: 'red.9',
+              icon: <BiErrorAlt />
+            })
           case 403:
-            setStatus('Not logged in!')
+            notifications.show({
+              title: 'Not logged in!',
+              message: '',
+              color: 'red.9',
+              icon: <BiErrorAlt />
+            })
         }
       }
     )
@@ -50,9 +61,19 @@ function AddStudent() {
             form.setFieldValue('classId', resp.data.classes[0][0])
             break;
           case 401:
-            setStatus('Unauthorized')
+            notifications.show({
+              title: 'Unauthorized',
+              message: '',
+              color: 'red.9',
+              icon: <BiErrorAlt />
+            })
           case 403:
-            setStatus('Not logged in!')
+            notifications.show({
+              title: 'Not logged in!',
+              message: '',
+              color: 'red.9',
+              icon: <BiErrorAlt />
+            })
         }
       }
     )
@@ -66,16 +87,38 @@ function AddStudent() {
       (resp) => {
         switch (resp.data.status) {
           case 200:
-            setStatus('Done!')
+            notifications.show({
+              title: 'Done',
+              message: '',
+              color: 'lime.8',
+              icon: <BiCheckCircle />
+            })
             break;
           case 401:
-            setStatus('You are not logged in or your session has expired!')
+            notifications.show({
+              title: 'You are not logged in or your session has expired!',
+              message: '',
+              color: 'red.9',
+              icon: <BiErrorAlt />
+            })
             break;
           case 403:
-            setStatus('You do not have sufficient privileges for this operation!')
+            notifications.show({
+              title: 'You do not have sufficient privileges for this operation!',
+              message: '',
+              color: 'red.9',
+              icon: <BiErrorAlt />
+            })
             break;
           case 500:
-            setStatus(resp.data.msg)
+            notifications.show({
+              title: resp.data.msg,
+              message: '',
+              autoClose: false,
+              withCloseButton: true,
+              color: 'red.9',
+              icon: <BiErrorAlt />
+            })
             break;
         }
       }
@@ -95,7 +138,6 @@ function AddStudent() {
       <NativeSelect label="Class" data={classesList} key={form.key('classId')} {...form.getInputProps('classId')} />
       <NativeSelect label="Half" data={['A', 'B']} key={form.key('half')} {...form.getInputProps('half')}/>
       <Group justify='flex-end'><Button onClick={createStudent}>Submit</Button></Group>
-      <Text>{status}</Text>
     </Stack>
     </>
   );
