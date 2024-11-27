@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, NativeSelect, Button, Group, Title, Text, TextInput, Paper, NumberInput } from '@mantine/core';
+import { GetNotification, PostNotification } from '../Components/APINotifications';
 
 function AddClass() {
   const form = useForm({
@@ -19,7 +20,6 @@ function AddClass() {
     }
   })
 
-  const [status, setStatus] = useState('')
   const [teacherStrId, setTeacherStrId] = useState('')
   const [foundTeacher, setFoundTeacher] = useState(<></>)
   const [buildingId, setBuildingId] = useState(0)
@@ -32,16 +32,12 @@ function AddClass() {
   useEffect( () => {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getTeacherByStrId', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'strId': teacherStrId}}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            if (resp.data.teacher === undefined || resp.data.teacher === null) return;
-            setFoundTeacher(<Text>{`${resp.data.teacher[2]}, ${resp.data.teacher[1]}`}</Text>)
-            form.setFieldValue('classTeacherId', resp.data.teacher[0])
-            break;
-          case 401:
-            setStatus('Unauthorized')
-          case 403:
-            setStatus('Not logged in!')
+        if (resp.data.status === 200) {
+          if (resp.data.teacher === undefined || resp.data.teacher === null) return;
+          setFoundTeacher(<Text>{`${resp.data.teacher[2]}, ${resp.data.teacher[1]}`}</Text>)
+          form.setFieldValue('classTeacherId', resp.data.teacher[0])
+        } else {
+          GetNotification(resp.data)
         }
       }
     )
@@ -50,16 +46,12 @@ function AddClass() {
   useEffect( () => {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getClassroomId', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'buildingId': buildingId, 'classroomNumber': classroomNumber}}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            if (resp.data.classroom === undefined || resp.data.classroom === null) return;
-            setFoundClassroom(<Text>Classroom found ({resp.data.classroom[1]})</Text>)
-            form.setFieldValue('rootClassroomId', resp.data.classroom[0])
-            break;
-          case 401:
-            setStatus('Unauthorized')
-          case 403:
-            setStatus('Not logged in!')
+        if (resp.data.status === 200) {
+          if (resp.data.classroom === undefined || resp.data.classroom === null) return;
+          setFoundClassroom(<Text>Classroom found ({resp.data.classroom[1]})</Text>)
+          form.setFieldValue('rootClassroomId', resp.data.classroom[0])
+        } else {
+          GetNotification(resp.data)
         }
       }
     )
@@ -68,31 +60,22 @@ function AddClass() {
   useEffect( () => {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getCourses', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            if (resp.data.courses === undefined || resp.data.courses[0] === undefined) return;
-            setCoursesList(resp.data.courses.map(c => ({label: `${c[1]} [${c[2]}]`, value: c[0]})))
-            form.setFieldValue('courseId', resp.data.courses[0][0])
-            break;
-          case 401:
-            setStatus('Unauthorized')
-            break;
-          case 403:
-            setStatus('Not logged in!')
+        if (resp.data.status === 200) {
+          if (resp.data.courses === undefined || resp.data.courses[0] === undefined) return;
+          setCoursesList(resp.data.courses.map(c => ({label: `${c[1]} [${c[2]}]`, value: c[0]})))
+          form.setFieldValue('courseId', resp.data.courses[0][0])
+        } else {
+          GetNotification(resp.data)
         }
       }
     )
     axios.get(process.env.REACT_APP_BE_ADDR+'/getBuildings', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            setBuildingsList(resp.data.buildings.map(building => ({label: `${building[1]} [${building[2]}]`, value: building[0]})));
-            setBuildingId(resp.data.buildings[0][0])
-            break;
-          case 401:
-            setStatus('Unauthorized')
-          case 403:
-            setStatus('Not logged in!')
+        if (resp.data.status === 200) {
+          setBuildingsList(resp.data.buildings.map(building => ({label: `${building[1]} [${building[2]}]`, value: building[0]})));
+          setBuildingId(resp.data.buildings[0][0])
+        } else {
+          GetNotification(resp.data)
         }
       }
     )
@@ -104,20 +87,7 @@ function AddClass() {
     }
     axios.post(process.env.REACT_APP_BE_ADDR+'/createClass', form.getValues(), {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            setStatus('Done!')
-            break;
-          case 401:
-            setStatus('You are not logged in or your session has expired!')
-            break;
-          case 403:
-            setStatus('You do not have sufficient privileges for this operation!')
-            break;
-          case 500:
-            setStatus(resp.data.msg)
-            break;
-        }
+        PostNotification(resp.data)
       }
     )
   }
@@ -149,7 +119,6 @@ function AddClass() {
         {foundTeacher}
       </Paper>
       <Group justify='flex-end'><Button onClick={createClass}>Submit</Button></Group>
-      <Text>{status}</Text>
     </Stack>
     </>
   );

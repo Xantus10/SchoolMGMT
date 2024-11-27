@@ -3,6 +3,8 @@ import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, NativeSelect, Button, Group, Title, Text, TextInput } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates'
+import { GetNotification, PostNotification } from '../Components/APINotifications';
+
 
 function AddTeacher() {
   const form = useForm({
@@ -19,7 +21,6 @@ function AddTeacher() {
     }
   })
 
-  const [status, setStatus] = useState('')
   const [pFirstName, setPFirstName] = useState('')
   const [pLastName, setPLastName] = useState('')
   const [EmployeesList, setEmployeesList] = useState([])
@@ -28,16 +29,12 @@ function AddTeacher() {
   useEffect( () => {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getEmployeesByNames', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {...(pFirstName!=='' && {'firstName': pFirstName}), ...(pLastName!=='' && {'lastName': pLastName})}}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            if (resp.data.employees === undefined || resp.data.employees[0] === undefined) return;
-            setEmployeesList(resp.data.employees.map(p => ({label: `${p[3]} ${p[4]} [${p[1]}]`, value: p[0]})));
-            form.setFieldValue('personId', resp.data.employees[0][0])
-            break;
-          case 401:
-            setStatus('Unauthorized')
-          case 403:
-            setStatus('Not logged in!')
+        if (resp.data.status === 200) {
+          if (resp.data.employees === undefined || resp.data.employees[0] === undefined) return;
+          setEmployeesList(resp.data.employees.map(p => ({label: `${p[3]} ${p[4]} [${p[1]}]`, value: p[0]})));
+          form.setFieldValue('personId', resp.data.employees[0][0])
+        } else {
+          GetNotification(resp.data)
         }
       }
     )
@@ -49,20 +46,7 @@ function AddTeacher() {
     }
     axios.post(process.env.REACT_APP_BE_ADDR+'/createTeacher', form.getValues(), {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            setStatus('Done!')
-            break;
-          case 401:
-            setStatus('You are not logged in or your session has expired!')
-            break;
-          case 403:
-            setStatus('You do not have sufficient privileges for this operation!')
-            break;
-          case 500:
-            setStatus(resp.data.msg)
-            break;
-        }
+        PostNotification(resp.data)
       }
     )
   }
@@ -80,7 +64,6 @@ function AddTeacher() {
       <DatePickerInput label="Teaching from" placeholder='Pick a date' valueFormat='YYYY-MM-DD' key={form.key('teachingFrom')} {...form.getInputProps('teachingFrom')} />
       <TextInput label="Teacher identificator (3 characters)" placeholder='ABC' key={form.key('strId')} {...form.getInputProps('strId')} />
       <Group justify='flex-end'><Button onClick={createTeacher}>Submit</Button></Group>
-      <Text>{status}</Text>
     </Stack>
     </>
   );

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, TextInput, Button, Group, Title, Text, PasswordInput } from '@mantine/core';
+import { GetNotification, PostNotification } from '../Components/APINotifications';
 
 function AddAccount() {
   const form = useForm({
@@ -21,7 +21,6 @@ function AddAccount() {
     }
   })
 
-  const [status, setStatus] = useState('')
 
   function createAccount() {
     if (form.validate().hasErrors) {
@@ -29,20 +28,7 @@ function AddAccount() {
     }
     axios.post(process.env.REACT_APP_BE_ADDR+'/createAccount', form.getValues(), {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            setStatus('Done!')
-            break;
-          case 401:
-            setStatus('You are not logged in or your session has expired!')
-            break;
-          case 403:
-            setStatus('You do not have sufficient privileges for this operation!')
-            break;
-          case 500:
-            setStatus(resp.data.msg)
-            break;
-        }
+        PostNotification(resp.data)
       }
     )
   }
@@ -56,7 +42,6 @@ function AddAccount() {
       <PasswordInput label="Password" placeholder='Password123' key={form.key('password')} {...form.getInputProps('password')} />
       <PasswordInput label="Repeat password" placeholder='Password123' key={form.key('rpass')} {...form.getInputProps('rpass')} />
       <Group justify='flex-end'><Button onClick={createAccount}>Submit</Button></Group>
-      <Text>{status}</Text>
     </Stack>
     </>
   );

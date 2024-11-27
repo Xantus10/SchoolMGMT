@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, NumberInput, NativeSelect, Button, Group, Title, Text } from '@mantine/core';
+import { GetNotification, PostNotification } from '../Components/APINotifications';
 
 function AddClassroom() {
   const form = useForm({
@@ -14,20 +15,15 @@ function AddClassroom() {
   })
 
   const [buildingList, setBuildingList] = useState([])
-  const [status, setStatus] = useState('')
 
   useEffect(() => {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getBuildings', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            setBuildingList(resp.data.buildings.map(building => ({label: `${building[1]} [${building[2]}]`, value: building[0]})));
-            form.setFieldValue('buildingId', resp.data.buildings[0][0])
-            break;
-          case 401:
-            setStatus('Unauthorized')
-          case 403:
-            setStatus('Not logged in!')
+        if (resp.data.status === 200) {
+          setBuildingList(resp.data.buildings.map(building => ({label: `${building[1]} [${building[2]}]`, value: building[0]})));
+          form.setFieldValue('buildingId', resp.data.buildings[0][0])
+        } else {
+          GetNotification(resp.data)
         }
       }
     )
@@ -39,20 +35,7 @@ function AddClassroom() {
     }
     axios.post(process.env.REACT_APP_BE_ADDR+'/createClassroom', form.getValues(), {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            setStatus('Done!')
-            break;
-          case 401:
-            setStatus('You are not logged in or your session has expired!')
-            break;
-          case 403:
-            setStatus('You do not have sufficient privileges for this operation!')
-            break;
-          case 500:
-            setStatus(resp.data.msg)
-            break;
-        }
+        PostNotification(resp.data)
       }
     )
   }
@@ -65,7 +48,6 @@ function AddClassroom() {
       <NumberInput hideControls allowNegative={false} label="Capacity" key={form.key('capacity')} {...form.getInputProps('capacity')} />
       <NativeSelect label="Building" data={buildingList} key={form.key('buildingId')} {...form.getInputProps('buildingId')} />
       <Group justify='flex-end'><Button onClick={createClassroom}>Submit</Button></Group>
-      <Text>{status}</Text>
     </Stack>
     </>
   );

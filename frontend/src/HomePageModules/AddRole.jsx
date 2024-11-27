@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, TextInput, Button, Group, Title, Text, PasswordInput } from '@mantine/core';
+import { GetNotification, PostNotification } from '../Components/APINotifications';
 
 function AddRole() {
   const form = useForm({
@@ -16,7 +16,6 @@ function AddRole() {
     }
   })
 
-  const [status, setStatus] = useState('')
 
   function createRole() {
     if (form.validate().hasErrors) {
@@ -24,20 +23,7 @@ function AddRole() {
     }
     axios.post(process.env.REACT_APP_BE_ADDR+'/createRole', form.getValues(), {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        switch (resp.data.status) {
-          case 200:
-            setStatus('Done!')
-            break;
-          case 401:
-            setStatus('You are not logged in or your session has expired!')
-            break;
-          case 403:
-            setStatus('You do not have sufficient privileges for this operation!')
-            break;
-          case 500:
-            setStatus(resp.data.msg)
-            break;
-        }
+        PostNotification(resp.data)
       }
     )
   }
@@ -48,7 +34,6 @@ function AddRole() {
     <Stack w={'max-content'} gap={7}>
       <TextInput label="Role" placeholder='Janitor, Technician' key={form.key('role')} {...form.getInputProps('role')} />
       <Group justify='flex-end'><Button onClick={createRole}>Submit</Button></Group>
-      <Text>{status}</Text>
     </Stack>
     </>
   );
