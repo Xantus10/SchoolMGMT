@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, NativeSelect, Button, Group, Title, Text, TextInput, Paper, NumberInput } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
+import { checkNullArray } from '../Components/Util.jsx'
 
 function AddClass() {
   const form = useForm({
@@ -33,7 +34,7 @@ function AddClass() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getTeacherByStrId', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'strId': teacherStrId}}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (resp.data.teacher === undefined || resp.data.teacher === null) return;
+          if (checkNullArray(resp.data.teacher)) return;
           setFoundTeacher(<Text>{`${resp.data.teacher[2]}, ${resp.data.teacher[1]}`}</Text>)
           form.setFieldValue('classTeacherId', resp.data.teacher[0])
         } else {
@@ -47,7 +48,7 @@ function AddClass() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getClassroomId', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'buildingId': buildingId, 'classroomNumber': classroomNumber}}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (resp.data.classroom === undefined || resp.data.classroom === null) return;
+          if (checkNullArray(resp.data.classroom)) return;
           setFoundClassroom(<Text>Classroom found ({resp.data.classroom[1]})</Text>)
           form.setFieldValue('rootClassroomId', resp.data.classroom[0])
         } else {
@@ -61,7 +62,7 @@ function AddClass() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getCourses', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (resp.data.courses === undefined || resp.data.courses[0] === undefined) return;
+          if (checkNullArray(resp.data.courses)) return;
           setCoursesList(resp.data.courses.map(c => ({label: `${c[1]} [${c[2]}]`, value: c[0]})))
           form.setFieldValue('courseId', resp.data.courses[0][0])
         } else {
@@ -72,6 +73,7 @@ function AddClass() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getBuildings', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
         if (resp.data.status === 200) {
+          if (checkNullArray(resp.data.buildings)) return;
           setBuildingsList(resp.data.buildings.map(building => ({label: `${building[1]} [${building[2]}]`, value: building[0]})));
           setBuildingId(resp.data.buildings[0][0])
         } else {

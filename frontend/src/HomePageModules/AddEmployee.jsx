@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, NativeSelect, Button, Group, Title, Text, Checkbox, TextInput } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
+import { checkNullArray } from '../Components/Util';
 
 function AddEmployee() {
   const form = useForm({
@@ -26,7 +27,7 @@ function AddEmployee() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getPeopleByNames', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {...(pFirstName!=='' && {'firstName': pFirstName}), ...(pLastName!=='' && {'lastName': pLastName})}}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (resp.data.people === undefined || resp.data.people[0] === undefined) return;
+          if (checkNullArray(resp.data.people)) return;
           setPeopleList(resp.data.people.map(p => ({label: `${p[3]} ${p[4]} [${p[1]}]`, value: p[0]})));
           form.setFieldValue('personId', resp.data.people[0][0])
         } else {
@@ -40,7 +41,7 @@ function AddEmployee() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getEmployeesByNames', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {...(eFirstName!=='' && {'firstName': eFirstName}), ...(eLastName!=='' && {'lastName': eLastName})}}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (resp.data.employees === undefined || resp.data.employees[0] === undefined) return;
+          if (checkNullArray(resp.data.employees)) return;
           setEmployeeList(resp.data.employees.map(p => ({label: `${p[3]} ${p[4]} [${p[1]}]`, value: p[0]})));
           form.setFieldValue('supervisorId', resp.data.employees[0][0])
         } else {

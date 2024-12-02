@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, NativeSelect, Button, Group, Title, TextInput } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
+import { checkNullArray } from '../Components/Util';
 
 function AddStudent() {
   const form = useForm({
@@ -24,7 +25,7 @@ function AddStudent() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getPeopleByNames', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {...(pFirstName!=='' && {'firstName': pFirstName}), ...(pLastName!=='' && {'lastName': pLastName})}}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (resp.data.people === undefined || resp.data.people[0] === undefined) return;
+          if (checkNullArray(resp.data.people)) return;
           setPeopleList(resp.data.people.map(p => ({label: `${p[3]} ${p[4]} [${p[1]}]`, value: p[0]})));
           form.setFieldValue('personId', resp.data.people[0][0])
         } else {
@@ -38,7 +39,7 @@ function AddStudent() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getClasses', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (resp.data.classes === undefined || resp.data.classes[0] === undefined) return;
+          if (checkNullArray(resp.data.classes)) return;
           let now = new Date()
           now.setMonth(now.getMonth()-8)
           setClassesList(resp.data.classes.map(c => ({label: `${c[1]}${now.getFullYear()-c[2]+1}${(c[3] === null) ? '' : c[3]}`, value: c[0]})));

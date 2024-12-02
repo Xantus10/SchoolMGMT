@@ -3,6 +3,7 @@ import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, TextInput, NativeSelect, Button, Group, Title, Text } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
+import { checkNullArray } from '../Components/Util';
 
 function AddPerson() {
   const form = useForm({
@@ -27,6 +28,7 @@ function AddPerson() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getRoles', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
         if (resp.data.status === 200) {
+          if (checkNullArray(resp.data.roles))
           setRolesList(resp.data.roles.map(role => ({label: role[1], value: role[0]})));
           form.setFieldValue('roleId', resp.data.roles[0][0])
         } else {
