@@ -455,6 +455,31 @@ def flask_createStudent():
     return {'status': 500, 'msg': msg}
   return {'status': 401}
 
+@app.route('/createSubject', methods=['POST'])
+def flask_createSubject():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    name = request.json['name']
+    strId = request.json['strId']
+    code = dbHandler.addSubject(name, strId)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case dbHandler.ERR_UNIQUE:
+        msg = 'Subject name or strID already exists!'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
 
 @app.route('/logout', methods=['POST'])
 def flask_logout():
