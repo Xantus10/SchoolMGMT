@@ -28,7 +28,7 @@ function AddPerson() {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getRoles', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (checkNullArray(resp.data.roles))
+          if (checkNullArray(resp.data.roles)) return;
           setRolesList(resp.data.roles.map(role => ({label: role[1], value: role[0]})));
           form.setFieldValue('roleId', resp.data.roles[0][0])
         } else {

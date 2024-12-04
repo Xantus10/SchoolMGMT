@@ -480,6 +480,66 @@ def flask_createSubject():
     return {'status': 500, 'msg': msg}
   return {'status': 401}
 
+@app.route('/getSubjects')
+def flask_getSubjects():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  subjects = dbHandler.getAllSubjects()
+  return {'status': 200, 'subjects': subjects}
+
+@app.route('/getSubjectsExpertiseForTeacher')
+def flask_getSubjectsForTeacher():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  teacherId = request.args.get('teacherId')
+  subjects = dbHandler.getAllExpertiseWithTeacher(teacherId)
+  return {'status': 200, 'subjects': subjects}
+
+@app.route('/createTeacherSubject', methods=['POST'])
+def flask_createTeacherSubject():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    teacherId = request.json['teacherId']
+    subjectId = request.json['subjectId']
+    code = 0
+    i = 0
+    while i < len(subjectId) and code == 0:
+      code = dbHandler.addTeacherSubjectExpertise(teacherId, int(subjectId[i]))
+      i += 1
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case dbHandler.ERR_PK:
+        msg = 'Teacher already has an expertise in subject'
+      case dbHandler.ERR_FK:
+        msg = 'Teacher or subject do not exist'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
 
 @app.route('/logout', methods=['POST'])
 def flask_logout():
