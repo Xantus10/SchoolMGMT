@@ -1,7 +1,6 @@
 import datetime
 import sqlite3
-from hashlib import sha256
-from secrets import token_hex
+from bcrypt import gensalt, hashpw, checkpw
 from itertools import product
 
 from logs import Logger
@@ -22,28 +21,6 @@ class DbHandler:
     self.db.execute('PRAGMA foreign_keys = ON;')
 
 
-  # Hash a password, returns salt,hash tuple
-  def hashPassword(self, password: str) -> tuple[str, str]:
-    try:
-      # Random salt
-      salt = token_hex(32)
-      # Hashed password with salt
-      hashed = sha256(bytes.fromhex(salt) + bytes(password, 'utf-8')).hexdigest()
-      return salt, hashed
-    except Exception as e:
-      self.logger.logunexpected('hashing a password', e)
-    return '', ''
-
-
-  # Check provided password, salt with a hash, returns bool
-  def checkHashedPassword(self, password: str, salt: str, checkHash: str) -> bool:
-    try:
-      return sha256(bytes.fromhex(salt) + bytes(password, 'utf-8')).hexdigest() == checkHash
-    except Exception as e:
-      self.logger.logunexpected('checking a hashed password', e)
-    return False
-
-
   # Initialize all database tables
   def initialize(self):
     try:
@@ -55,7 +32,7 @@ class DbHandler:
       cursor.execute('CREATE TABLE IF NOT EXISTS roles(id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT NOT NULL UNIQUE);')
       cursor.execute('CREATE TABLE IF NOT EXISTS names(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);')
       cursor.execute('CREATE TABLE IF NOT EXISTS people(id INTEGER PRIMARY KEY AUTOINCREMENT, birthNumber INTEGER NOT NULL UNIQUE, roleId INTEGER NOT NULL, firstNameId INTEGER NOT NULL, lastNameId INTEGER NOT NULL, CONSTRAINT FK_people_roleId FOREIGN KEY (roleId) REFERENCES roles(id), CONSTRAINT FK_people_firstNameId FOREIGN KEY (firstNameId) REFERENCES names(id), CONSTRAINT FK_people_lastNameId FOREIGN KEY (lastNameId) REFERENCES names(id));')
-      cursor.execute('CREATE TABLE IF NOT EXISTS accounts(personId INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, salt TEXT NOT NULL, password TEXT NOT NULL, disabled INTEGER, CONSTRAINT FK_accounts_personId FOREIGN KEY (personId) REFERENCES people(id), CONSTRAINT CH_accounts_disabled CHECK (disabled IS NULL OR disabled=1));')
+      cursor.execute('CREATE TABLE IF NOT EXISTS accounts(personId INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, disabled INTEGER, CONSTRAINT FK_accounts_personId FOREIGN KEY (personId) REFERENCES people(id), CONSTRAINT CH_accounts_disabled CHECK (disabled IS NULL OR disabled=1));')
       cursor.execute('CREATE TABLE IF NOT EXISTS employees(personId INTEGER PRIMARY KEY, supervisorId INTEGER, CONSTRAINT FK_employees_personId FOREIGN KEY(personId) REFERENCES people(id), CONSTRAINT FK_employees_supervisorId FOREIGN KEY (supervisorId) REFERENCES employees(personId), CONSTRAINT CH_employees_supervisorId CHECK (supervisorId!=personId));')
       cursor.execute('CREATE TABLE IF NOT EXISTS teachers(personId INTEGER PRIMARY KEY, strIdentifier TEXT NOT NULL UNIQUE, teachingFrom DATE NOT NULL, CONSTRAINT FK_teachers_personId FOREIGN KEY (personId) REFERENCES employees(personId));')
       cursor.execute('CREATE TABLE IF NOT EXISTS classes(id INTEGER PRIMARY KEY AUTOINCREMENT, startYear INTEGER NOT NULL, groupNumber INTEGER, rootClassroomId INTEGER NOT NULL UNIQUE, courseId INTEGER NOT NULL, classTeacherId INTEGER NOT NULL, CONSTRAINT FK_classes_rootClassroomId FOREIGN KEY (rootClassroomId) REFERENCES classrooms(id), CONSTRAINT FK_classes_courseId FOREIGN KEY (courseId) REFERENCES courses(id), CONSTRAINT FK_classes_classTeacherId FOREIGN KEY (classTeacherId) REFERENCES teachers(personId), CONSTRAINT U_classes_startYear_courseId_groupNumber UNIQUE (startYear, courseId, groupNumber), CONSTRAINT CH_classes_groupNumber_startYear CHECK ((groupNumber=1 OR groupNumber=2 OR groupNumber IS NULL) AND (startYear>2000 AND startYear<=9999)));')
@@ -386,13 +363,13 @@ class DbHandler:
       
       cursor = self.db.cursor()
       # Hash the password
-      salt, hashed = self.hashPassword(password)
+      hashed = hashpw(bytes(password, 'utf-8'), gensalt())
       # Data for INSERT
-      data = (personId, username, salt, hashed)
+      data = (personId, username, hashed)
       # INSERT into accounts table
-      cursor.execute('INSERT INTO accounts(personId, username, salt, password) VALUES(?, ?, ?, ?);', data)
+      cursor.execute('INSERT INTO accounts(personId, username, password) VALUES(?, ?, ?);', data)
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a user', e.sqlite_errorcode, e, (personId, username, salt, password))
+      self.logger.logsqlite('adding a user', e.sqlite_errorcode, e, (personId, username, password))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -931,17 +908,17 @@ class DbHandler:
       
       cursor = self.db.cursor()
       # Get id, salt and password of a username
-      account = cursor.execute('SELECT a.personId, a.salt, a.password, a.disabled, roles.role FROM roles JOIN people ON roles.id=people.roleId JOIN accounts a ON people.id=a.personId WHERE a.username = ?;', (username,))
+      account = cursor.execute('SELECT a.personId, a.password, a.disabled, roles.role FROM roles JOIN people ON roles.id=people.roleId JOIN accounts a ON people.id=a.personId WHERE a.username = ?;', (username,))
       account = account.fetchone()
       self.db.commit()
       # Check if the username exists
       if account:
         # Check if the account is disabled
-        if account[3] == 1:
+        if account[2] == 1:
           return -1, ''
         # Check if the password is right
-        if (self.checkHashedPassword(password, account[1], account[2])):
-          return account[0], account[4]
+        if (checkpw(bytes(password, 'utf-8'), bytes(account[1]))):
+          return account[0], account[3]
         else:
           self.logger.log(f'Password didn\'t match for user {username}', 2)
       else:
