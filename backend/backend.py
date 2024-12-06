@@ -542,6 +542,70 @@ def flask_createTeacherSubject():
     return {'status': 500, 'msg': msg}
   return {'status': 401}
 
+@app.route('/createLectureTime', methods=['POST'])
+def flask_createLectureTime():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    lectureId = request.json['lectureId']
+    time = request.json['time']
+    if time:
+      time = time.split(':')
+      time = int(time[0])*60+int(time[1])
+    code = dbHandler.addLectureTime(lectureId, time)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case dbHandler.ERR_PK:
+        msg = 'Lecture already exists'
+      case dbHandler.ERR_UNIQUE:
+        msg = 'There is a lecture starting at that time'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
+@app.route('/initializeLectures', methods=['POST'])
+def flask_initializeLectures():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    code = dbHandler.initializeLectures()
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
+@app.route('/getLectureTimes')
+def flask_getlectureTimes():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  times = dbHandler.getAllLectureTimes()
+  return {'status': 200, 'times': times}
 
 @app.route('/logout', methods=['POST'])
 def flask_logout():

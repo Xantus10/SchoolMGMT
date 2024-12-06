@@ -43,7 +43,7 @@ class DbHandler:
       cursor.execute('CREATE TABLE IF NOT EXISTS subjects(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, strIdentifier TEXT NOT NULL UNIQUE);')
       cursor.execute('CREATE TABLE IF NOT EXISTS teachersSubjectsExpertise(teacherId INTEGER, subjectId INTEGER, CONSTRAINT PK_teachersSubjectsExpertise PRIMARY KEY (teacherId, subjectId), CONSTRAINT FK_teachersSubjectsExpertise_teacherId FOREIGN KEY (teacherId) REFERENCES teachers(personId), CONSTRAINT FK_teachersSubjectsExpertise_subjectId FOREIGN KEY (subjectId) REFERENCES subjects(id));')
       cursor.execute('CREATE TABLE IF NOT EXISTS daysInWeek(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE);')
-      cursor.execute('CREATE TABLE IF NOT EXISTS lectureTimes(id INTEGER PRIMARY KEY, startTime TIME NOT NULL UNIQUE);')
+      cursor.execute('CREATE TABLE IF NOT EXISTS lectureTimes(id INTEGER PRIMARY KEY, startTime INTEGER NOT NULL UNIQUE);')
       cursor.execute('CREATE TABLE IF NOT EXISTS lectures(id INTEGER PRIMARY KEY AUTOINCREMENT, isEvenWeek INTEGER NOT NULL, dayId INTEGER NOT NULL, timeId INTEGER NOT NULL, CONSTRAINT FK_lectures_dayId FOREIGN KEY (dayId) REFERENCES daysInWeek(id), CONSTRAINT FK_lectures_timeId FOREIGN KEY (timeId) REFERENCES lectureTimes(id), CONSTRAINT U_lectures_all UNIQUE (isEvenWeek, dayId, timeId), CONSTRAINT CH_lectures_isEvenWeek CHECK (isEvenWeek=0 OR isEvenWeek=1));')
       cursor.execute('CREATE TABLE IF NOT EXISTS schedules(id INTEGER PRIMARY KEY AUTOINCREMENT, lectureId INTEGER NOT NULL, classId INTEGER NOT NULL, teacherId INTEGER NOT NULL, subjectId INTEGER NOT NULL, fullOrAB TEXT NOT NULL, classroomId INTEGER NOT NULL, CONSTRAINT FK_schedules_lectureId FOREIGN KEY (lectureId) REFERENCES lectures(id), CONSTRAINT FK_schedules_classId FOREIGN KEY (classId) REFERENCES classes(id), CONSTRAINT FK_schedules_teachersubjectId FOREIGN KEY (teacherId, subjectId) REFERENCES teachersSubjectsExpertise(teacherId, subjectId), CONSTRAINT FK_schedules_classroomId FOREIGN KEY (classroomId) REFERENCES classrooms(id), CONSTRAINT U_schedules_lectureId_classId_fullOrAB UNIQUE(lectureId, classId, fullOrAB), CONSTRAINT U_schedules_lectureId_teacherId UNIQUE(lectureId, teacherId), CONSTRAINT U_schedules_lectureId_classroomId UNIQUE(lectureId, classroomId), CONSTRAINT CH_schedules_fullOrAB CHECK (fullOrAB=\'A\' OR fullOrAB=\'B\' OR fullOrAB=\'F\'));')
       cursor.execute('CREATE TABLE IF NOT EXISTS classification(id INTEGER PRIMARY KEY AUTOINCREMENT, weight REAL NOT NULL, date DATE NOT NULL, title TEXT NOT NULL, scheduleId INTEGER NOT NULL, CONSTRAINT FK_classification_scheduleId FOREIGN KEY (scheduleId) REFERENCES schedules(id), CONSTRAINT U_classification_scheduleId_date_title UNIQUE (scheduleId, date, title), CONSTRAINT CH_classification_weight CHECK (weight>0 AND weight<=1));')
@@ -764,7 +764,7 @@ class DbHandler:
       db = self.getDBConn()
       cursor = db.cursor()
       days = [(1,'Monday'), (2,'Tuesday'), (3,'Wednesday'), (4,'Thursday'), (5,'Friday'), (6,'Saturday'), (7,'Sunday')]
-      cursor.executemany('INSERT OR IGNORE INTO daysInWeek(id, name) VALUES(?, ?)', days)
+      cursor.executemany('INSERT OR IGNORE INTO daysInWeek(id, name) VALUES(?, ?);', days)
     except sqlite3.Error as e:
       self.logger.logsqlite('initializing daysInWeek', e.sqlite_errorcode, e)
       db.commit()
@@ -775,14 +775,13 @@ class DbHandler:
     return 0
 
 
-  def addLectureTime(self, lectureId: int, time: datetime.datetime):
+  def addLectureTime(self, lectureId: int, minutesAfterMidnight: int):
     try:
-      
       db = self.getDBConn()
       cursor = db.cursor()
-      cursor.execute('INSERT INTO lectureTimes(id, startTime) VALUES(?, ?)', (lectureId, time))
+      cursor.execute('INSERT INTO lectureTimes(id, startTime) VALUES(?, ?);', (lectureId, minutesAfterMidnight))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding lectureTime', e.sqlite_errorcode, e)
+      self.logger.logsqlite('adding lectureTime', e.sqlite_errorcode, e, (lectureId, minutesAfterMidnight))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -790,21 +789,36 @@ class DbHandler:
     db.commit()
     return 0
 
+  # [id, timestamp]
+  def getAllLectureTimes(self) -> list[int, int]:
+    try:
+      db = self.getDBConn()
+      cursor = db.cursor()
+      times = cursor.execute('SELECT * FROM lectureTimes;')
+      times = times.fetchall()
+      db.commit()
+      return times
+    except sqlite3.Error as e:
+      self.logger.logsqlite('getting all lecturetimes', e.sqlite_errorcode, e)
+    except Exception as e:
+      self.logger.logunexpected('getting all lecturetimes', e)
+    db.commit()
+    return []
 
   def initializeLectures(self):
     try:
       
       db = self.getDBConn()
       cursor = db.cursor()
-      days = cursor.execute('SELECT id FROM daysInWeek')
+      days = cursor.execute('SELECT id FROM daysInWeek;')
       days = days.fetchall()
-      times = cursor.execute('SELECT id FROM lectureTimes')
+      times = cursor.execute('SELECT id FROM lectureTimes;')
       times = times.fetchall()
       for i in range(len(days)):
         days[i] = days[i][0]
       for i in range(len(times)):
         times[i] = times[i][0]
-      cursor.executemany('INSERT OR IGNORE INTO lectures(isEvenWeek, dayId, timeId) VALUES(?, ?, ?)', list(product([0,1], days, times)))
+      cursor.executemany('INSERT OR IGNORE INTO lectures(isEvenWeek, dayId, timeId) VALUES(?, ?, ?);', list(product([0,1], days, times)))
     except sqlite3.Error as e:
       self.logger.logsqlite('initializing lectures', e.sqlite_errorcode, e)
       db.commit()
@@ -844,7 +858,7 @@ class DbHandler:
       
       db = self.getDBConn()
       cursor = db.cursor()
-      cursor.execute('INSERT INTO schedules(lectureId, classId, teacherId, subjectId, classroomId, FullORAB) VALUES(?, ?, ?, ?, ?, ?)', (lectureId, classId, teacherId, subjectId, classroomId, FullORAB))
+      cursor.execute('INSERT INTO schedules(lectureId, classId, teacherId, subjectId, classroomId, FullORAB) VALUES(?, ?, ?, ?, ?, ?);', (lectureId, classId, teacherId, subjectId, classroomId, FullORAB))
     except sqlite3.Error as e:
       self.logger.logsqlite('adding schedule single', e.sqlite_errorcode, e)
       db.commit()

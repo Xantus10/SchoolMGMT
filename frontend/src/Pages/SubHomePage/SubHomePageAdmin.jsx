@@ -12,6 +12,7 @@ import AddClass from '../../HomePageModules/AddClass.jsx';
 import AddStudent from '../../HomePageModules/AddStudent.jsx';
 import AddSubject from '../../HomePageModules/AddSubject.jsx';
 import AddTeacherSubjectExpertise from '../../HomePageModules/AddTeacherSubjectExpertise.jsx';
+import AddLectureTime from '../../HomePageModules/AddLectureTimes.jsx';
 
 
 function SubHomePageAdmin({setContent}) {
@@ -104,6 +105,13 @@ function SubHomePageAdmin({setContent}) {
           </Menu.Item>
           <Menu.Item onClick={e => setContent(<AddTeacherSubjectExpertise />)}>
             <Text>Add teacher expertise</Text>
+          </Menu.Item>
+          <Menu.Divider />
+          <Menu.Label>
+            Schedules
+          </Menu.Label>
+          <Menu.Item onClick={e => setContent(<AddLectureTime />)}>
+            <Text>Lecture times</Text>
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
