@@ -31,7 +31,7 @@ class DbHandler:
       hashed = sha256(bytes.fromhex(salt) + bytes(password, 'utf-8')).hexdigest()
       return salt, hashed
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while hashing a password; Error message: {e}')
+      self.logger.logunexpected('hashing a password', e)
     return '', ''
 
 
@@ -40,7 +40,7 @@ class DbHandler:
     try:
       return sha256(bytes.fromhex(salt) + bytes(password, 'utf-8')).hexdigest() == checkHash
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while checking a hashed password; Error message: {e}')
+      self.logger.logunexpected('checking a hashed password', e)
     return False
 
 
@@ -72,9 +72,9 @@ class DbHandler:
       cursor.execute('CREATE TABLE IF NOT EXISTS absenceTypes(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);')
       cursor.execute('CREATE TABLE IF NOT EXISTS studentsAbsence(id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE NOT NULL, lectureId INTEGER NOT NULL, studentId INTEGER NOT NULL, absenceTypeId INTEGER NOT NULL, CONSTRAINT FK_studentsAbsence_lectureId FOREIGN KEY (lectureId) REFERENCES lectures(id), CONSTRAINT FK_studentsAbsence_studentId FOREIGN KEY (studentId) REFERENCES students(personId), CONSTRAINT FK_studentsAbsence_absenceTypeId FOREIGN KEY (absenceTypeId) REFERENCES absenceTypes(id), CONSTRAINT U_studentsAbsence_date_lectureId_studentId UNIQUE (date, lectureId, studentId));')
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while initializing tables; Error message: {e}')
+      self.logger.logsqlite('initializing tables', e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while initializing tables; Error message: {e}')
+      self.logger.logunexpected('initializing tables', e)
     self.db.commit()
     return 0
 
@@ -86,11 +86,11 @@ class DbHandler:
       cursor = self.db.cursor()
       cursor.execute('INSERT INTO buildings(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a building; Error message: ({e.sqlite_errorcode}) {e}; Data: {(name, strIdentifier)}')
+      self.logger.logsqlite('adding a building', e.sqlite_errorcode, e, (name, strIdentifier))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a building; Error message: {e}')
+      self.logger.logunexpected('adding a building', e)
     self.db.commit()
     return 0
 
@@ -103,9 +103,9 @@ class DbHandler:
       self.db.commit()
       return building
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all buildings; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting all buildings', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all buildings; Error message: {e}')
+      self.logger.logunexpected('getting all buildings', e)
     self.db.commit()
     return []
 
@@ -122,9 +122,9 @@ class DbHandler:
       self.logger.log(f'Building was not found for name {name}', 2)
       return []
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting a building; Error message: ({e.sqlite_errorcode}) {e}; Data: {(name)}')
+      self.logger.logsqlite('getting a building', e.sqlite_errorcode, e, (name))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting a building; Error message: {e}')
+      self.logger.logunexpected('getting a building', e)
     self.db.commit()
     return []
 
@@ -141,9 +141,9 @@ class DbHandler:
       self.logger.log(f'Building was not found for id {buildingId}', 2)
       return []
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting a building; Error message: ({e.sqlite_errorcode}) {e}; Data: {(buildingId)}')
+      self.logger.logsqlite('getting a building', e.sqlite_errorcode, e, (buildingId))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting a building; Error message: {e}')
+      self.logger.logunexpected('getting a building', e)
     self.db.commit()
     return []
 
@@ -155,11 +155,11 @@ class DbHandler:
       cursor = self.db.cursor()
       cursor.execute('INSERT INTO classrooms(number, capacity, buildingId) VALUES(?, ?, ?);', (number, capacity, buildingId))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a classroom; Error message: ({e.sqlite_errorcode}) {e}; Data: {(number, capacity, buildingId)}')
+      self.logger.logsqlite('adding a classroom', e.sqlite_errorcode, e, (number, capacity, buildingId))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a classroom; Error message: {e}')
+      self.logger.logunexpected('adding a classroom', e)
     self.db.commit()
     return 0
 
@@ -173,9 +173,9 @@ class DbHandler:
       self.db.commit()
       return classrooms
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all classrooms; Error message: ({e.sqlite_errorcode}) {e}; Data: {buildingId}')
+      self.logger.logsqlite('getting all classrooms', e.sqlite_errorcode, e, buildingId)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all classrooms; Error message: {e}')
+      self.logger.logunexpected('getting all classrooms', e)
     self.db.commit()
     return []
 
@@ -188,9 +188,9 @@ class DbHandler:
       self.db.commit()
       return classrooms
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting classroomId; Error message: ({e.sqlite_errorcode}) {e}; Data: {(number, buildingId)}')
+      self.logger.logsqlite('getting classroomId', e.sqlite_errorcode, e, (number, buildingId))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting classroomId; Error message: {e}')
+      self.logger.logunexpected('getting classroomId', e)
     self.db.commit()
     return []
 
@@ -202,11 +202,11 @@ class DbHandler:
       cursor = self.db.cursor()
       cursor.execute('INSERT INTO courses(name, strIdentifier) VALUES(?, ?);', (name, strId))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a course; Error message: ({e.sqlite_errorcode}) {e}; Data: {(name, strId)}')
+      self.logger.logsqlite('adding a course', e.sqlite_errorcode, e, (name, strId))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a course; Error message: {e}')
+      self.logger.logunexpected('adding a course', e)
     self.db.commit()
     return 0
 
@@ -219,9 +219,9 @@ class DbHandler:
       self.db.commit()
       return courses
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all courses; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting all courses', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all courses; Error message: {e}')
+      self.logger.logunexpected('getting all courses', e)
     self.db.commit()
     return []
 
@@ -234,11 +234,11 @@ class DbHandler:
       default = [('admin',), ('teacher',), ('student',)]
       cursor.executemany('INSERT OR IGNORE INTO roles(role) VALUES(?);', default)
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a role; Error message: ({e.sqlite_errorcode}) {e}; Data: {(default)}')
+      self.logger.logsqlite('adding a role', e.sqlite_errorcode, e, (default))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a role; Error message: {e}')
+      self.logger.logunexpected('adding a role', e)
     self.db.commit()
     return 0
 
@@ -249,11 +249,11 @@ class DbHandler:
       role = role.lower()
       cursor.execute('INSERT INTO roles(role) VALUES(?);', (role,))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a role; Error message: ({e.sqlite_errorcode}) {e}; Data: {(role)}')
+      self.logger.logsqlite('adding a role', e.sqlite_errorcode, e, (role))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a role; Error message: {e}')
+      self.logger.logunexpected('adding a role', e)
     self.db.commit()
     return 0
 
@@ -266,9 +266,9 @@ class DbHandler:
       self.db.commit()
       return roles
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all roles; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting all roles', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all roles; Error message: {e}')
+      self.logger.logunexpected('getting all roles', e)
     self.db.commit()
     return []
 
@@ -286,11 +286,11 @@ class DbHandler:
       lnId = lnId.fetchone()[0]
       cursor.execute('INSERT INTO people(birthNumber, roleId, firstNameId, lastNameId) VALUES(?, ?, ?, ?)', (birthNumber, roleId, fnId, lnId))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a person; Error message: ({e.sqlite_errorcode}) {e}; Data: {(birthNumber, roleId, firstName, lastName)}')
+      self.logger.logsqlite('adding a person', e.sqlite_errorcode, e, (birthNumber, roleId, firstName, lastName))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a person; Error message: {e}')
+      self.logger.logunexpected('adding a person', e)
     self.db.commit()
     return 0
 
@@ -308,9 +308,9 @@ class DbHandler:
       self.db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting person(bn); Error message: ({e.sqlite_errorcode}) {e}; Data: {birthNumber}')
+      self.logger.logsqlite('getting person(bn)', e.sqlite_errorcode, e, birthNumber)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting person(bn); Error message: {e}')
+      self.logger.logunexpected('getting person(bn)', e)
     self.db.commit()
     return []
 
@@ -328,9 +328,9 @@ class DbHandler:
       self.db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting person(id); Error message: ({e.sqlite_errorcode}) {e}; Data: {pid}')
+      self.logger.logsqlite('getting person(id)', e.sqlite_errorcode, e, pid)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting person(id); Error message: {e}')
+      self.logger.logunexpected('getting person(id)', e)
     self.db.commit()
     return []
 
@@ -354,9 +354,9 @@ class DbHandler:
       self.db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all people by role; Error message: ({e.sqlite_errorcode}) {e}; Data: {firstName, lastName}')
+      self.logger.logsqlite('getting all people by role', e.sqlite_errorcode, e, firstName, lastName)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all people by name; Error message: {e}')
+      self.logger.logunexpected('getting all people by name', e)
     self.db.commit()
     return []
 
@@ -374,9 +374,9 @@ class DbHandler:
       self.db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all people by role; Error message: ({e.sqlite_errorcode}) {e}; Data: {role}')
+      self.logger.logsqlite('getting all people by role', e.sqlite_errorcode, e, role)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all people by role; Error message: {e}')
+      self.logger.logunexpected('getting all people by role', e)
     self.db.commit()
     return []
 
@@ -392,11 +392,11 @@ class DbHandler:
       # INSERT into accounts table
       cursor.execute('INSERT INTO accounts(personId, username, salt, password) VALUES(?, ?, ?, ?);', data)
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a user; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, username, salt, password)}')
+      self.logger.logsqlite('adding a user', e.sqlite_errorcode, e, (personId, username, salt, password))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a user; Error message: {e}')
+      self.logger.logunexpected('adding a user', e)
     self.db.commit()
     return 0
 
@@ -410,9 +410,9 @@ class DbHandler:
       if account: account[1] = bool(account[1])
       return account
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting account; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting account', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting account; Error message: {e}')
+      self.logger.logunexpected('getting account', e)
     self.db.commit()
     return []
 
@@ -428,9 +428,9 @@ class DbHandler:
         self.db.commit()
         if sup: return sup[1] == personId
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while checking supervisor loops; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, supervisorId)}')
+      self.logger.logsqlite('checking supervisor loops', e.sqlite_errorcode, e, (personId, supervisorId))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while checking supervisor loops; Error message: {e}')
+      self.logger.logunexpected('checking supervisor loops', e)
     self.db.commit()
     return 0
 
@@ -440,11 +440,11 @@ class DbHandler:
         cursor = self.db.cursor()
         cursor.execute('INSERT INTO employees(personId, supervisorId) VALUES(?, ?);', (personId, supervisorId))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding an employee; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, supervisorId)}')
+      self.logger.logsqlite('adding an employee', e.sqlite_errorcode, e, (personId, supervisorId))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding an employee; Error message: {e}')
+      self.logger.logunexpected('adding an employee', e)
     self.db.commit()
     return 0
 
@@ -457,9 +457,9 @@ class DbHandler:
       self.db.commit()
       return emp
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting employee; Error message: ({e.sqlite_errorcode}) {e}; Data: {personId};')
+      self.logger.logsqlite('getting employee', e.sqlite_errorcode, e, personId)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting employee; Error message: {e}')
+      self.logger.logunexpected('getting employee', e)
     self.db.commit()
     return []
 
@@ -478,9 +478,9 @@ class DbHandler:
       self.db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all employees by supervisor; Error message: ({e.sqlite_errorcode}) {e}; Data: {supervisorId}')
+      self.logger.logsqlite('getting all employees by supervisor', e.sqlite_errorcode, e, supervisorId)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all employees by supervisor; Error message: {e}')
+      self.logger.logunexpected('getting all employees by supervisor', e)
     self.db.commit()
     return []
 
@@ -504,9 +504,9 @@ class DbHandler:
       self.db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all employees by name; Error message: ({e.sqlite_errorcode}) {e}; Data: {firstName, lastName}')
+      self.logger.logsqlite('getting all employees by name', e.sqlite_errorcode, e, firstName, lastName)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all employees by name; Error message: {e}')
+      self.logger.logunexpected('getting all employees by name', e)
     self.db.commit()
     return []
 
@@ -517,11 +517,11 @@ class DbHandler:
         cursor = self.db.cursor()
         cursor.execute('INSERT INTO teachers(personId, teachingFrom, strIdentifier) VALUES(?, ?, ?);', (personId, teachingFrom, strIdentifier))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a teacher; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, teachingFrom, strIdentifier)}')
+      self.logger.logsqlite('adding a teacher', e.sqlite_errorcode, e, (personId, teachingFrom, strIdentifier))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a teacher; Error message: {e}')
+      self.logger.logunexpected('adding a teacher', e)
     self.db.commit()
     return 0
 
@@ -542,9 +542,9 @@ class DbHandler:
         teachers[i][-1] = datetime.datetime.strptime(teachers[i][-1], '%Y-%m-%d')
       return teachers
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all teachers; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting all teachers', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all teachers; Error message: {e}')
+      self.logger.logunexpected('getting all teachers', e)
     self.db.commit()
     return []
 
@@ -562,9 +562,9 @@ class DbHandler:
       self.db.commit()
       return teachers
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting a teacher; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting a teacher', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting a teacher; Error message: {e}')
+      self.logger.logunexpected('getting a teacher', e)
     self.db.commit()
     return []
 
@@ -575,11 +575,11 @@ class DbHandler:
         cursor = self.db.cursor()
         cursor.execute('INSERT INTO classes(startYear, rootClassroomId, courseId, classTeacherId, groupNumber) VALUES(?, ?, ?, ?, ?);', (startYear, rootClassroomId, courseId, classTeacherId, groupNumber))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a class; Error message: ({e.sqlite_errorcode}) {e}; Data: {(startYear, rootClassroomId, courseId, classTeacherId, groupNumber)}')
+      self.logger.logsqlite('adding a class', e.sqlite_errorcode, e, (startYear, rootClassroomId, courseId, classTeacherId, groupNumber))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a class; Error message: {e}')
+      self.logger.logunexpected('adding a class', e)
     self.db.commit()
     return 0
 
@@ -594,9 +594,9 @@ class DbHandler:
       self.db.commit()
       return classes
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all classes; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting all classes', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all classes; Error message: {e}')
+      self.logger.logunexpected('getting all classes', e)
     self.db.commit()
     return []
 
@@ -612,9 +612,9 @@ class DbHandler:
       self.db.commit()
       return classes
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all classes; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting all classes', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all classes; Error message: {e}')
+      self.logger.logunexpected('getting all classes', e)
     self.db.commit()
     return []
 
@@ -626,11 +626,11 @@ class DbHandler:
         cursor = self.db.cursor()
         cursor.execute('INSERT INTO students(personId, classId, half) VALUES(?, ?, ?);', (personId, classId, half))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a student; Error message: ({e.sqlite_errorcode}) {e}; Data: {(personId, classId, half)}')
+      self.logger.logsqlite('adding a student', e.sqlite_errorcode, e, (personId, classId, half))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a student; Error message: {e}')
+      self.logger.logunexpected('adding a student', e)
     self.db.commit()
     return 0
 
@@ -649,9 +649,9 @@ class DbHandler:
       self.db.commit()
       return students
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all students; Error message: ({e.sqlite_errorcode}) {e}; Data: {(classId, half)}')
+      self.logger.logsqlite('getting all students', e.sqlite_errorcode, e, (classId, half))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all students; Error message: {e}')
+      self.logger.logunexpected('getting all students', e)
     self.db.commit()
     return []
 
@@ -663,11 +663,11 @@ class DbHandler:
         cursor = self.db.cursor()
         cursor.execute('INSERT INTO subjects(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a subject; Error message: ({e.sqlite_errorcode}) {e}; Data: {(name, strIdentifier)}')
+      self.logger.logsqlite('adding a subject', e.sqlite_errorcode, e, (name, strIdentifier))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a subject; Error message: {e}')
+      self.logger.logunexpected('adding a subject', e)
     self.db.commit()
     return 0
 
@@ -681,9 +681,9 @@ class DbHandler:
       self.db.commit()
       return subjects
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all subjects; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('getting all subjects', e.sqlite_errorcode, e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all subjects; Error message: {e}')
+      self.logger.logunexpected('getting all subjects', e)
     self.db.commit()
     return []
 
@@ -695,11 +695,11 @@ class DbHandler:
         cursor = self.db.cursor()
         cursor.execute('INSERT INTO teachersSubjectsExpertise(teacherId, subjectId) VALUES(?, ?);', (teacherId, subjectId))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding a teacher subject; Error message: ({e.sqlite_errorcode}) {e}; Data: {(teacherId, subjectId)}')
+      self.logger.logsqlite('adding a teacher subject', e.sqlite_errorcode, e, (teacherId, subjectId))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding a teacher subject; Error message: {e}')
+      self.logger.logunexpected('adding a teacher subject', e)
     self.db.commit()
     return 0
 
@@ -715,9 +715,9 @@ class DbHandler:
       self.db.commit()
       return expertise
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all expertise(t); Error message: ({e.sqlite_errorcode}) {e}; Data: {(teacherId)}')
+      self.logger.logsqlite('getting all expertise(t)', e.sqlite_errorcode, e, (teacherId))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all expertise(t); Error message: {e}')
+      self.logger.logunexpected('getting all expertise(t)', e)
     self.db.commit()
     return []
 
@@ -733,9 +733,9 @@ class DbHandler:
       self.db.commit()
       return expertise
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all expertise(s); Error message: ({e.sqlite_errorcode}) {e}; Data: {(subjectId)}')
+      self.logger.logsqlite('getting all expertise(s)', e.sqlite_errorcode, e, (subjectId))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all expertise(s); Error message: {e}')
+      self.logger.logunexpected('getting all expertise(s)', e)
     self.db.commit()
     return []
 
@@ -748,11 +748,11 @@ class DbHandler:
       days = [(1,'Monday'), (2,'Tuesday'), (3,'Wednesday'), (4,'Thursday'), (5,'Friday'), (6,'Saturday'), (7,'Sunday')]
       cursor.executemany('INSERT OR IGNORE INTO daysInWeek(id, name) VALUES(?, ?)', days)
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while initializing daysInWeek; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('initializing daysInWeek', e.sqlite_errorcode, e)
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while initializing daysInWeek; Error message: {e}')
+      self.logger.logunexpected('initializing daysInWeek', e)
     self.db.commit()
     return 0
 
@@ -763,11 +763,11 @@ class DbHandler:
       cursor = self.db.cursor()
       cursor.execute('INSERT INTO lectureTimes(id, startTime) VALUES(?, ?)', (lectureId, time))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding lectureTime; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('adding lectureTime', e.sqlite_errorcode, e)
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding lectureTime; Error message: {e}')
+      self.logger.logunexpected('adding lectureTime', e)
     self.db.commit()
     return 0
 
@@ -786,11 +786,11 @@ class DbHandler:
         times[i] = times[i][0]
       cursor.executemany('INSERT OR IGNORE INTO lectures(isEvenWeek, dayId, timeId) VALUES(?, ?, ?)', list(product([0,1], days, times)))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while initializing lectures; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('initializing lectures', e.sqlite_errorcode, e)
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while initializing lectures; Error message: {e}')
+      self.logger.logunexpected('initializing lectures', e)
     self.db.commit()
     return 0
 
@@ -810,9 +810,9 @@ class DbHandler:
         lectures[i][4] = bool(lectures[i][4])
       return lectures
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting all lectures; Error message: {e}')
+      self.logger.logsqlite('getting all lectures', e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting all lectures; Error message: {e}')
+      self.logger.logunexpected('getting all lectures', e)
     self.db.commit()
     return []
 
@@ -824,11 +824,11 @@ class DbHandler:
       cursor = self.db.cursor()
       cursor.execute('INSERT INTO schedules(lectureId, classId, teacherId, subjectId, classroomId, FullORAB) VALUES(?, ?, ?, ?, ?, ?)', (lectureId, classId, teacherId, subjectId, classroomId, FullORAB))
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while adding schedule single; Error message: ({e.sqlite_errorcode}) {e};')
+      self.logger.logsqlite('adding schedule single', e.sqlite_errorcode, e)
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while adding schedule single; Error message: {e}')
+      self.logger.logunexpected('adding schedule single', e)
     self.db.commit()
     return 0
 
@@ -854,9 +854,9 @@ class DbHandler:
         schedule[i][4] = bool(schedule[i][4])
       return schedule
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting schedule for class; Error message: {e}')
+      self.logger.logsqlite('getting schedule for class', e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting schedule for class; Error message: {e}')
+      self.logger.logunexpected('getting schedule for class', e)
     self.db.commit()
     return []
 
@@ -883,9 +883,9 @@ class DbHandler:
         schedule[i][4] = bool(schedule[i][4])
       return schedule
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting schedule for class; Error message: {e}')
+      self.logger.logsqlite('getting schedule for class', e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting schedule for class; Error message: {e}')
+      self.logger.logunexpected('getting schedule for class', e)
     self.db.commit()
     return []
 
@@ -911,9 +911,9 @@ class DbHandler:
         schedule[i][4] = bool(schedule[i][4])
       return schedule
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while getting schedule for class; Error message: {e}')
+      self.logger.logsqlite('getting schedule for class', e)
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while getting schedule for class; Error message: {e}')
+      self.logger.logunexpected('getting schedule for class', e)
     self.db.commit()
     return []
 
@@ -947,9 +947,9 @@ class DbHandler:
       else:
         self.logger.log(f'Unknown username: {username}', 2)
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while logging in a user; Error message: ({e.sqlite_errorcode}) {e}; Data: {(username, password)}')
+      self.logger.logsqlite('logging in a user', e.sqlite_errorcode, e, (username, password))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while logging in a user; Error message: {e}')
+      self.logger.logunexpected('logging in a user', e)
     self.db.commit()
     return -1, ''
 
@@ -967,9 +967,9 @@ class DbHandler:
         return True
       return False
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while checking if a username already exists; Error message: ({e.sqlite_errorcode}) {e}; Data: {(username)}')
+      self.logger.logsqlite('checking if a username already exists', e.sqlite_errorcode, e, (username))
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while checking if a username already exists; Error message: {e}')
+      self.logger.logunexpected('checking if a username already exists', e)
     self.db.commit()
     return True
 
@@ -988,11 +988,11 @@ class DbHandler:
         # If we were unable to find the id in accounts, we log it as a warning
         self.logger.log(f'Recieved remove request for id({ix}), however requested row is not present in accounts table aborting', 2)
     except sqlite3.Error as e:
-      self.logger.log(f'An error in SQL syntax occurred while removing a user; Error message: ({e.sqlite_errorcode}) {e}; Data: {(ix)}')
+      self.logger.logsqlite('removing a user', e.sqlite_errorcode, e, (ix))
       self.db.commit()
       return e.sqlite_errorcode
     except Exception as e:
-      self.logger.log(f'An unexpected error occurred while removing a user; Error message: {e}')
+      self.logger.logunexpected('removing a user', e)
     self.db.commit()
     return 0
 
