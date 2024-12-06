@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from flask import Flask, request, make_response
 from flask_cors import CORS
 
-import dbHandler
+from dbHandler import DbHandler
 from MyJWT import JWT
 
 
@@ -10,6 +10,8 @@ COOKIEEXPIRYSECONDS = 24 * 3600 # 1 day
 jwt = JWT()
 jwt.set_secret_key('v4t13G*N-HJQ5v+173Y5+.vEbpV^BGGH60[R<8Ev63V*D+5Aa4eQ5tva]}')
 jwt.set_expires(COOKIEEXPIRYSECONDS)
+
+dbHandler = DbHandler('data/database.db')
 
 app = Flask(__name__)
 CORS(app, origins=['http://localhost:5173'], supports_credentials=True)
