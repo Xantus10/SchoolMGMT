@@ -25,5 +25,5 @@ frontend/.env
 *.sw?
 
 # Backend data
-backend/data
+backend/data/*
 backend/__pycache__
