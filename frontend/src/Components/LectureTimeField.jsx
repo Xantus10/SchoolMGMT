@@ -6,7 +6,7 @@ import { Stack, Button, Modal, Paper, Center, Text } from '@mantine/core';
 import { TimeInput } from '@mantine/dates'
 import { PostNotification } from '../Components/APINotifications';
 
-function LectureTimeField({ alectureId, alectureTime=0 }) {
+function LectureTimeField({ alectureId, alectureTime=0, aClickable=true }) {
   const form = useForm({
     mode:'uncontrolled',
     initialValues: {
@@ -34,7 +34,7 @@ function LectureTimeField({ alectureId, alectureTime=0 }) {
 
   return (
     <>
-    <Paper onClick={setModalDisclosure.open} shadow='md' p='sm'>
+    <Paper onClick={(aClickable) ? setModalDisclosure.open : ()=>{}} shadow='md' p='sm'>
       <Center><Stack gap={7}>
         <Text>{alectureId}</Text>
         <Text>{Math.floor(lectureTime/60)}:{lectureTime%60} - {Math.floor((lectureTime+45)/60)}:{(lectureTime+45)%60}</Text>
