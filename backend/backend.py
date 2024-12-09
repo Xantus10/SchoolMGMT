@@ -607,6 +607,39 @@ def flask_getlectureTimes():
   times = dbHandler.getAllLectureTimes()
   return {'status': 200, 'times': times}
 
+@app.route('/createSchedule', methods=['POST'])
+def flask_createSchedule():
+  if request.method == 'POST':
+    JWT_token = request.cookies.get('JWT_token')
+    JWT_user_context = request.cookies.get('JWT_user_context')
+    isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+    if not isValid:
+      resp = make_response({'status': 401})
+      resp.delete_cookie('JWT_token')
+      resp.delete_cookie('JWT_user_context')
+      return resp
+    if data['role'] != 'admin': {'status': 403}
+    lectureId = request.json['lectureId']
+    classId = request.json['classId']
+    teacherId = request.json['teacherId']
+    subjectId = request.json['subjectId']
+    classroomId = request.json['classroomId']
+    FullOrAB = request.json['FullOrAB']
+    code = dbHandler.addScheduleSingle(lectureId, classId, teacherId, subjectId, classroomId, FullOrAB)
+    if code == 0: return {'status': 200}
+    msg = ''
+    match (code):
+      case dbHandler.ERR_UNIQUE:
+        msg = 'Insert failed, make sure, that\nTeacher isn\'t occupied or\nClassroom isn\'t occupied'
+      case dbHandler.ERR_CHECK:
+        msg = 'Invalid division modifier'
+      case _:
+        msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
+    return {'status': 500, 'msg': msg}
+  return {'status': 401}
+
+
+
 @app.route('/logout', methods=['POST'])
 def flask_logout():
   if request.method == 'POST':
