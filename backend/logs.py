@@ -31,7 +31,7 @@ class Logger:
     except Exception as e:
       print(f'ERROR Unexpected Exception occurred while logging: {e}\nPLEASE RESOLVE IMMEDIATLY')
   
-  def logsqlite(self, msg: str, errcode: int, errmsg: Exception, data=None, ptype=3):
+  def logsqlite(self, msg: str, errmsg: Exception, errcode: int=0, data=None, ptype=3):
     self.log(f'Error in SQLITE occured - {msg}; ErrMSG: ({errcode}) {errmsg}{("; Data: "+str(data)) if data else ""}', ptype)
 
   def logunexpected(self, msg: str, errmsg: Exception, data=None, ptype=3):
