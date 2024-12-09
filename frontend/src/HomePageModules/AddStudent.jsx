@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useForm } from '@mantine/form';
 import { Stack, NativeSelect, Button, Group, Title, TextInput } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
-import { checkNullArray } from '../Components/Util';
+import { checkNullArray, constructClassId } from '../Components/Util';
 
 function AddStudent() {
   const form = useForm({
@@ -42,7 +42,7 @@ function AddStudent() {
           if (checkNullArray(resp.data.classes)) return;
           let now = new Date()
           now.setMonth(now.getMonth()-8)
-          setClassesList(resp.data.classes.map(c => ({label: `${c[1]}${now.getFullYear()-c[2]+1}${(c[3] === null) ? '' : c[3]}`, value: c[0]})));
+          setClassesList(resp.data.classes.map(c => ({label: constructClassId(c[1], c[2], c[3]), value: c[0]})));
           form.setFieldValue('classId', resp.data.classes[0][0])
         } else {
           GetNotification(resp.data)
