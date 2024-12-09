@@ -67,7 +67,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO buildings(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a building', e.sqlite_errorcode, e, (name, strIdentifier))
+      self.logger.logsqlite('adding a building', e, e.sqlite_errorcode, (name, strIdentifier))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -85,7 +85,7 @@ class DbHandler:
       db.commit()
       return building
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all buildings', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting all buildings', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting all buildings', e)
     db.commit()
@@ -105,7 +105,7 @@ class DbHandler:
       self.logger.log(f'Building was not found for name {name}', 2)
       return []
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting a building', e.sqlite_errorcode, e, (name))
+      self.logger.logsqlite('getting a building', e, e.sqlite_errorcode, (name))
     except Exception as e:
       self.logger.logunexpected('getting a building', e)
     db.commit()
@@ -125,7 +125,7 @@ class DbHandler:
       self.logger.log(f'Building was not found for id {buildingId}', 2)
       return []
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting a building', e.sqlite_errorcode, e, (buildingId))
+      self.logger.logsqlite('getting a building', e, e.sqlite_errorcode, (buildingId))
     except Exception as e:
       self.logger.logunexpected('getting a building', e)
     db.commit()
@@ -140,7 +140,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO classrooms(number, capacity, buildingId) VALUES(?, ?, ?);', (number, capacity, buildingId))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a classroom', e.sqlite_errorcode, e, (number, capacity, buildingId))
+      self.logger.logsqlite('adding a classroom', e, e.sqlite_errorcode, (number, capacity, buildingId))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -159,7 +159,7 @@ class DbHandler:
       db.commit()
       return classrooms
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all classrooms', e.sqlite_errorcode, e, buildingId)
+      self.logger.logsqlite('getting all classrooms', e, e.sqlite_errorcode, buildingId)
     except Exception as e:
       self.logger.logunexpected('getting all classrooms', e)
     db.commit()
@@ -175,7 +175,7 @@ class DbHandler:
       db.commit()
       return classrooms
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting classroomId', e.sqlite_errorcode, e, (number, buildingId))
+      self.logger.logsqlite('getting classroomId', e, e.sqlite_errorcode, (number, buildingId))
     except Exception as e:
       self.logger.logunexpected('getting classroomId', e)
     db.commit()
@@ -190,7 +190,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO courses(name, strIdentifier) VALUES(?, ?);', (name, strId))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a course', e.sqlite_errorcode, e, (name, strId))
+      self.logger.logsqlite('adding a course', e, e.sqlite_errorcode, (name, strId))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -208,7 +208,7 @@ class DbHandler:
       db.commit()
       return courses
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all courses', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting all courses', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting all courses', e)
     db.commit()
@@ -224,7 +224,7 @@ class DbHandler:
       default = [('admin',), ('teacher',), ('student',)]
       cursor.executemany('INSERT OR IGNORE INTO roles(role) VALUES(?);', default)
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a role', e.sqlite_errorcode, e, (default))
+      self.logger.logsqlite('adding a role', e, e.sqlite_errorcode, (default))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -240,7 +240,7 @@ class DbHandler:
       role = role.lower()
       cursor.execute('INSERT INTO roles(role) VALUES(?);', (role,))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a role', e.sqlite_errorcode, e, (role))
+      self.logger.logsqlite('adding a role', e, e.sqlite_errorcode, (role))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -258,7 +258,7 @@ class DbHandler:
       db.commit()
       return roles
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all roles', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting all roles', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting all roles', e)
     db.commit()
@@ -279,7 +279,7 @@ class DbHandler:
       lnId = lnId.fetchone()[0]
       cursor.execute('INSERT INTO people(birthNumber, roleId, firstNameId, lastNameId) VALUES(?, ?, ?, ?)', (birthNumber, roleId, fnId, lnId))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a person', e.sqlite_errorcode, e, (birthNumber, roleId, firstName, lastName))
+      self.logger.logsqlite('adding a person', e, e.sqlite_errorcode, (birthNumber, roleId, firstName, lastName))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -302,7 +302,7 @@ class DbHandler:
       db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting person(bn)', e.sqlite_errorcode, e, birthNumber)
+      self.logger.logsqlite('getting person(bn)', e, e.sqlite_errorcode, birthNumber)
     except Exception as e:
       self.logger.logunexpected('getting person(bn)', e)
     db.commit()
@@ -323,7 +323,7 @@ class DbHandler:
       db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting person(id)', e.sqlite_errorcode, e, pid)
+      self.logger.logsqlite('getting person(id)', e, e.sqlite_errorcode, pid)
     except Exception as e:
       self.logger.logunexpected('getting person(id)', e)
     db.commit()
@@ -350,7 +350,7 @@ class DbHandler:
       db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all people by role', e.sqlite_errorcode, e, firstName, lastName)
+      self.logger.logsqlite('getting all people by role', e, e.sqlite_errorcode, firstName, lastName)
     except Exception as e:
       self.logger.logunexpected('getting all people by name', e)
     db.commit()
@@ -371,7 +371,7 @@ class DbHandler:
       db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all people by role', e.sqlite_errorcode, e, role)
+      self.logger.logsqlite('getting all people by role', e, e.sqlite_errorcode, role)
     except Exception as e:
       self.logger.logunexpected('getting all people by role', e)
     db.commit()
@@ -390,7 +390,7 @@ class DbHandler:
       # INSERT into accounts table
       cursor.execute('INSERT INTO accounts(personId, username, password) VALUES(?, ?, ?);', data)
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a user', e.sqlite_errorcode, e, (personId, username, password))
+      self.logger.logsqlite('adding a user', e, e.sqlite_errorcode, (personId, username, password))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -409,7 +409,7 @@ class DbHandler:
       if account: account[1] = bool(account[1])
       return account
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting account', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting account', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting account', e)
     db.commit()
@@ -428,7 +428,7 @@ class DbHandler:
       db.commit()
       if sup: return sup[1] == personId
     except sqlite3.Error as e:
-      self.logger.logsqlite('checking supervisor loops', e.sqlite_errorcode, e, (personId, supervisorId))
+      self.logger.logsqlite('checking supervisor loops', e, e.sqlite_errorcode, (personId, supervisorId))
     except Exception as e:
       self.logger.logunexpected('checking supervisor loops', e)
     db.commit()
@@ -441,7 +441,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO employees(personId, supervisorId) VALUES(?, ?);', (personId, supervisorId))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding an employee', e.sqlite_errorcode, e, (personId, supervisorId))
+      self.logger.logsqlite('adding an employee', e, e.sqlite_errorcode, (personId, supervisorId))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -459,7 +459,7 @@ class DbHandler:
       db.commit()
       return emp
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting employee', e.sqlite_errorcode, e, personId)
+      self.logger.logsqlite('getting employee', e, e.sqlite_errorcode, personId)
     except Exception as e:
       self.logger.logunexpected('getting employee', e)
     db.commit()
@@ -481,7 +481,7 @@ class DbHandler:
       db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all employees by supervisor', e.sqlite_errorcode, e, supervisorId)
+      self.logger.logsqlite('getting all employees by supervisor', e, e.sqlite_errorcode, supervisorId)
     except Exception as e:
       self.logger.logunexpected('getting all employees by supervisor', e)
     db.commit()
@@ -508,7 +508,7 @@ class DbHandler:
       db.commit()
       return person
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all employees by name', e.sqlite_errorcode, e, firstName, lastName)
+      self.logger.logsqlite('getting all employees by name', e, e.sqlite_errorcode, firstName, lastName)
     except Exception as e:
       self.logger.logunexpected('getting all employees by name', e)
     db.commit()
@@ -522,7 +522,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO teachers(personId, teachingFrom, strIdentifier) VALUES(?, ?, ?);', (personId, teachingFrom, strIdentifier))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a teacher', e.sqlite_errorcode, e, (personId, teachingFrom, strIdentifier))
+      self.logger.logsqlite('adding a teacher', e, e.sqlite_errorcode, (personId, teachingFrom, strIdentifier))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -548,7 +548,7 @@ class DbHandler:
         teachers[i][-1] = datetime.datetime.strptime(teachers[i][-1], '%Y-%m-%d')
       return teachers
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all teachers', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting all teachers', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting all teachers', e)
     db.commit()
@@ -569,7 +569,7 @@ class DbHandler:
       db.commit()
       return teachers
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting a teacher', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting a teacher', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting a teacher', e)
     db.commit()
@@ -583,7 +583,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO classes(startYear, rootClassroomId, courseId, classTeacherId, groupNumber) VALUES(?, ?, ?, ?, ?);', (startYear, rootClassroomId, courseId, classTeacherId, groupNumber))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a class', e.sqlite_errorcode, e, (startYear, rootClassroomId, courseId, classTeacherId, groupNumber))
+      self.logger.logsqlite('adding a class', e, e.sqlite_errorcode, (startYear, rootClassroomId, courseId, classTeacherId, groupNumber))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -603,7 +603,7 @@ class DbHandler:
       db.commit()
       return classes
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all classes', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting all classes', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting all classes', e)
     db.commit()
@@ -622,7 +622,7 @@ class DbHandler:
       db.commit()
       return classes
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all classes', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting all classes', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting all classes', e)
     db.commit()
@@ -637,7 +637,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO students(personId, classId, half) VALUES(?, ?, ?);', (personId, classId, half))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a student', e.sqlite_errorcode, e, (personId, classId, half))
+      self.logger.logsqlite('adding a student', e, e.sqlite_errorcode, (personId, classId, half))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -661,7 +661,7 @@ class DbHandler:
       db.commit()
       return students
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all students', e.sqlite_errorcode, e, (classId, half))
+      self.logger.logsqlite('getting all students', e, e.sqlite_errorcode, (classId, half))
     except Exception as e:
       self.logger.logunexpected('getting all students', e)
     db.commit()
@@ -676,7 +676,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO subjects(name, strIdentifier) VALUES(?, ?);', (name, strIdentifier))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a subject', e.sqlite_errorcode, e, (name, strIdentifier))
+      self.logger.logsqlite('adding a subject', e, e.sqlite_errorcode, (name, strIdentifier))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -695,7 +695,7 @@ class DbHandler:
       db.commit()
       return subjects
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all subjects', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting all subjects', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting all subjects', e)
     db.commit()
@@ -710,7 +710,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO teachersSubjectsExpertise(teacherId, subjectId) VALUES(?, ?);', (teacherId, subjectId))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding a teacher subject', e.sqlite_errorcode, e, (teacherId, subjectId))
+      self.logger.logsqlite('adding a teacher subject', e, e.sqlite_errorcode, (teacherId, subjectId))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -731,7 +731,7 @@ class DbHandler:
       db.commit()
       return expertise
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all expertise(t)', e.sqlite_errorcode, e, (teacherId))
+      self.logger.logsqlite('getting all expertise(t)', e, e.sqlite_errorcode, (teacherId))
     except Exception as e:
       self.logger.logunexpected('getting all expertise(t)', e)
     db.commit()
@@ -750,7 +750,7 @@ class DbHandler:
       db.commit()
       return expertise
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all expertise(s)', e.sqlite_errorcode, e, (subjectId))
+      self.logger.logsqlite('getting all expertise(s)', e, e.sqlite_errorcode, (subjectId))
     except Exception as e:
       self.logger.logunexpected('getting all expertise(s)', e)
     db.commit()
@@ -763,10 +763,10 @@ class DbHandler:
       
       db = self.getDBConn()
       cursor = db.cursor()
-      days = [(1,'Monday'), (2,'Tuesday'), (3,'Wednesday'), (4,'Thursday'), (5,'Friday'), (6,'Saturday'), (7,'Sunday')]
+      days = [(1,'Mon'), (2,'Tue'), (3,'Wed'), (4,'Thu'), (5,'Fri'), (6,'Sat'), (7,'Sun')]
       cursor.executemany('INSERT OR IGNORE INTO daysInWeek(id, name) VALUES(?, ?);', days)
     except sqlite3.Error as e:
-      self.logger.logsqlite('initializing daysInWeek', e.sqlite_errorcode, e)
+      self.logger.logsqlite('initializing daysInWeek', e, e.sqlite_errorcode)
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -774,6 +774,21 @@ class DbHandler:
     db.commit()
     return 0
 
+  # [id, Name]
+  def getAllDaysInWeek(self) -> list[int, int]:
+    try:
+      db = self.getDBConn()
+      cursor = db.cursor()
+      days = cursor.execute('SELECT * FROM daysInWeek;')
+      days = days.fetchall()
+      db.commit()
+      return days
+    except sqlite3.Error as e:
+      self.logger.logsqlite('getting all days', e, e.sqlite_errorcode)
+    except Exception as e:
+      self.logger.logunexpected('getting all days', e)
+    db.commit()
+    return []
 
   def addLectureTime(self, lectureId: int, minutesAfterMidnight: int):
     try:
@@ -781,7 +796,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO lectureTimes(id, startTime) VALUES(?, ?);', (lectureId, minutesAfterMidnight))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding lectureTime', e.sqlite_errorcode, e, (lectureId, minutesAfterMidnight))
+      self.logger.logsqlite('adding lectureTime', e, e.sqlite_errorcode, (lectureId, minutesAfterMidnight))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -799,7 +814,7 @@ class DbHandler:
       db.commit()
       return times
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting all lecturetimes', e.sqlite_errorcode, e)
+      self.logger.logsqlite('getting all lecturetimes', e, e.sqlite_errorcode)
     except Exception as e:
       self.logger.logunexpected('getting all lecturetimes', e)
     db.commit()
@@ -820,7 +835,7 @@ class DbHandler:
         times[i] = times[i][0]
       cursor.executemany('INSERT OR IGNORE INTO lectures(isEvenWeek, dayId, timeId) VALUES(?, ?, ?);', list(product([0,1], days, times)))
     except sqlite3.Error as e:
-      self.logger.logsqlite('initializing lectures', e.sqlite_errorcode, e)
+      self.logger.logsqlite('initializing lectures', e, e.sqlite_errorcode)
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -860,7 +875,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO schedules(lectureId, classId, teacherId, subjectId, classroomId, FullORAB) VALUES(?, ?, ?, ?, ?, ?);', (lectureId, classId, teacherId, subjectId, classroomId, FullORAB))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding schedule single', e.sqlite_errorcode, e)
+      self.logger.logsqlite('adding schedule single', e, e.sqlite_errorcode)
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
@@ -868,16 +883,14 @@ class DbHandler:
     db.commit()
     return 0
 
-  # [lectureId, day, timeId, time, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
+  # [lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
   def getScheduleForClass(self, classId: int):
     try:
       
       db = self.getDBConn()
       cursor = db.cursor()
-      schedule = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek, teachers.strIdentifier, subjects.strIdentifier, buildings.strIdentifier, classrooms.number, schedules.fullOrAB FROM schedules
+      schedule = cursor.execute('''SELECT lectures.id, lectures.dayId, lectures.timeId, lectures.isEvenWeek, teachers.strIdentifier, subjects.strIdentifier, buildings.strIdentifier, classrooms.number, schedules.fullOrAB FROM schedules
                                                   JOIN lectures ON schedules.lectureId=lectures.id
-                                                  JOIN daysInWeek d ON lectures.dayId=d.id
-                                                  JOIN lectureTimes t ON lectures.timeId=t.id
                                                   JOIN teachers ON schedules.teacherId=teachers.personId
                                                   JOIN subjects ON schedules.subjectId=subjects.id
                                                   JOIN classrooms ON schedules.classroomId=classrooms.id
@@ -885,10 +898,6 @@ class DbHandler:
                                                   WHERE schedules.classId=?;''', (classId,))
       schedule = schedule.fetchall()
       db.commit()
-      for i, lecture in enumerate(schedule):
-        schedule[i] = list(lecture)
-        schedule[i][3] = datetime.datetime.strptime(schedule[i][3], '%Y-%m-%d %H:%M:%S')
-        schedule[i][4] = bool(schedule[i][4])
       return schedule
     except sqlite3.Error as e:
       self.logger.logsqlite('getting schedule for class', e)
@@ -897,16 +906,14 @@ class DbHandler:
     db.commit()
     return []
 
-  # [lectureId, day, timeId, time, evenWeek, courseStrID, classStratYear, classGroupNumber, subjectStrID, buildingStrID, classroomNum, fullOrAB]
+  # [lectureId, dayId, timeId, evenWeek, courseStrID, classStartYear, classGroupNumber, subjectStrID, buildingStrID, classroomNum, fullOrAB]
   def getScheduleForTeacher(self, teacherId: int):
     try:
       
       db = self.getDBConn()
       cursor = db.cursor()
-      schedule = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek, courses.strIdentifier, classes.startYear, classes.groupNumber, subjects.strIdentifier, buildings.strIdentifier, classrooms.number, schedules.fullOrAB FROM schedules
+      schedule = cursor.execute('''SELECT lectures.id, lectures.dayId, lectures.timeId, lectures.isEvenWeek, courses.strIdentifier, classes.startYear, classes.groupNumber, subjects.strIdentifier, buildings.strIdentifier, classrooms.number, schedules.fullOrAB FROM schedules
                                                   JOIN lectures ON schedules.lectureId=lectures.id
-                                                  JOIN daysInWeek d ON lectures.dayId=d.id
-                                                  JOIN lectureTimes t ON lectures.timeId=t.id
                                                   JOIN classes ON schedules.classId=classes.id
                                                   JOIN courses ON classes.courseId=courses.id
                                                   JOIN subjects ON schedules.subjectId=subjects.id
@@ -915,10 +922,6 @@ class DbHandler:
                                                   WHERE schedules.teacherId=?;''', (teacherId,))
       schedule = schedule.fetchall()
       db.commit()
-      for i, lecture in enumerate(schedule):
-        schedule[i] = list(lecture)
-        schedule[i][3] = datetime.datetime.strptime(schedule[i][3], '%Y-%m-%d %H:%M:%S')
-        schedule[i][4] = bool(schedule[i][4])
       return schedule
     except sqlite3.Error as e:
       self.logger.logsqlite('getting schedule for class', e)
@@ -927,16 +930,14 @@ class DbHandler:
     db.commit()
     return []
 
-  # [lectureId, day, timeId, time, evenWeek, courseStrID, classStratYear, classGroupNumber, subjectStrID, teacherStrID, fullOrAB]
+  # [lectureId, dayId, timeId, evenWeek, courseStrID, classStratYear, classGroupNumber, subjectStrID, teacherStrID, fullOrAB]
   def getScheduleForClassroom(self, classroomId: int):
     try:
       
       db = self.getDBConn()
       cursor = db.cursor()
-      schedule = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek, courses.strIdentifier, classes.startYear, classes.groupNumber, subjects.strIdentifier, teachers.strIdentifier, schedules.fullOrAB FROM schedules
-                                                  JOIN lectures ON schedules.lectureId=lectures.id
-                                                  JOIN daysInWeek d ON lectures.dayId=d.id
-                                                  JOIN lectureTimes t ON lectures.timeId=t.id
+      schedule = cursor.execute('''SELECT lectures.id, lectures.dayId, lectures.timeId, lectures.isEvenWeek, courses.strIdentifier, classes.startYear, classes.groupNumber, subjects.strIdentifier, teachers.strIdentifier, schedules.fullOrAB FROM schedules
+                                                  JOIN lectures ON schedules.lectureId=lectures.ids
                                                   JOIN classes ON schedules.classId=classes.id
                                                   JOIN courses ON classes.courseId=courses.id
                                                   JOIN subjects ON schedules.subjectId=subjects.id
@@ -944,10 +945,6 @@ class DbHandler:
                                                   WHERE schedules.classroomId=?;''', (classroomId,))
       schedule = schedule.fetchall()
       db.commit()
-      for i, lecture in enumerate(schedule):
-        schedule[i] = list(lecture)
-        schedule[i][3] = datetime.datetime.strptime(schedule[i][3], '%Y-%m-%d %H:%M:%S')
-        schedule[i][4] = bool(schedule[i][4])
       return schedule
     except sqlite3.Error as e:
       self.logger.logsqlite('getting schedule for class', e)
@@ -987,7 +984,7 @@ class DbHandler:
       else:
         self.logger.log(f'Unknown username: {username}', 2)
     except sqlite3.Error as e:
-      self.logger.logsqlite('logging in a user', e.sqlite_errorcode, e, (username, password))
+      self.logger.logsqlite('logging in a user', e, e.sqlite_errorcode, (username, password))
     except Exception as e:
       self.logger.logunexpected('logging in a user', e)
     db.commit()
@@ -1008,7 +1005,7 @@ class DbHandler:
         return True
       return False
     except sqlite3.Error as e:
-      self.logger.logsqlite('checking if a username already exists', e.sqlite_errorcode, e, (username))
+      self.logger.logsqlite('checking if a username already exists', e, e.sqlite_errorcode, (username))
     except Exception as e:
       self.logger.logunexpected('checking if a username already exists', e)
     db.commit()
@@ -1030,7 +1027,7 @@ class DbHandler:
         # If we were unable to find the id in accounts, we log it as a warning
         self.logger.log(f'Recieved remove request for id({ix}), however requested row is not present in accounts table aborting', 2)
     except sqlite3.Error as e:
-      self.logger.logsqlite('removing a user', e.sqlite_errorcode, e, (ix))
+      self.logger.logsqlite('removing a user', e, e.sqlite_errorcode, (ix))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
