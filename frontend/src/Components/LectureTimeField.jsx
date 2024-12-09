@@ -6,7 +6,7 @@ import { Stack, Button, Modal, Paper, Center, Text } from '@mantine/core';
 import { TimeInput } from '@mantine/dates'
 import { PostNotification } from '../Components/APINotifications';
 
-function LectureTimeField({ alectureId, alectureTime=0, aClickable=true }) {
+function LectureTimeField({ alectureId, alectureTime=0, aClickable=false }) {
   const form = useForm({
     mode:'uncontrolled',
     initialValues: {
