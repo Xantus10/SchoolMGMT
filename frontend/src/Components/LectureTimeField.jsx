@@ -5,6 +5,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { Stack, Button, Modal, Paper, Center, Text } from '@mantine/core';
 import { TimeInput } from '@mantine/dates'
 import { PostNotification } from '../Components/APINotifications';
+import { stampToTime } from './Util';
 
 function LectureTimeField({ alectureId, alectureTime=0, aClickable=false }) {
   const form = useForm({
@@ -37,7 +38,7 @@ function LectureTimeField({ alectureId, alectureTime=0, aClickable=false }) {
     <Paper onClick={(aClickable) ? setModalDisclosure.open : ()=>{}} shadow='md' p='sm'>
       <Center><Stack gap={7}>
         <Text>{alectureId}</Text>
-        <Text>{Math.floor(lectureTime/60)}:{lectureTime%60} - {Math.floor((lectureTime+45)/60)}:{(lectureTime+45)%60}</Text>
+        <Text>{stampToTime(lectureTime)} - {stampToTime(lectureTime+45)}</Text>
       </Stack></Center>
     </Paper>
     <Modal opened={modalDisclosure} onClose={setModalDisclosure.close} title="Lecture" p="xl">

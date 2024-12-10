@@ -8,3 +8,7 @@ export function constructClassId(course, year, group) {
   now.setMonth(now.getMonth()-8)
   return `${course}${now.getFullYear()-year+1}${(group === 0) ? '' : group}`
 }
+
+export function stampToTime(timestamp) {
+  return Math.floor(timestamp/60) + ':' + timestamp%60
+}
