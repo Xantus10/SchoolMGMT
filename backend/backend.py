@@ -607,6 +607,20 @@ def flask_getlectureTimes():
   times = dbHandler.getAllLectureTimes()
   return {'status': 200, 'times': times}
 
+@app.route('/getDays')
+def flask_getDays():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  days = dbHandler.getAllDaysInWeek()
+  return {'status': 200, 'days': days}
+
 @app.route('/createSchedule', methods=['POST'])
 def flask_createSchedule():
   if request.method == 'POST':

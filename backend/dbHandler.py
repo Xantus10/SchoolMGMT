@@ -775,7 +775,7 @@ class DbHandler:
     return 0
 
   # [id, Name]
-  def getAllDaysInWeek(self) -> list[int, int]:
+  def getAllDaysInWeek(self) -> list[int, str]:
     try:
       db = self.getDBConn()
       cursor = db.cursor()

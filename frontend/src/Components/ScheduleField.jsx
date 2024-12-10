@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks';
-import { Stack, Button, Modal, Paper, Center, Text, Menu, TextInput, NativeSelect } from '@mantine/core';
+import { Stack, Button, Modal, Paper, Center, Text, Menu, TextInput, NativeSelect, NumberInput } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
 import { constructClassId } from '../Components/Util.jsx'
 
 
-// Field type: C for class | T for teachers | R for room
-function ScheduleField({ alectureId, aFieldType='C', aClassId, aData={teacherStrId: '', subjectStrID: '', buildingStrId: '', classroomNum: '', courseStrId: '', startYear: 0, group: null}, aClickable=false }) {
+// Field type: C for class | T for teachers | R for room | E for empty
+function ScheduleField({ alectureId, aFieldType='E', aClassId, aData={teacherStrId: '', subjectStrID: '', buildingStrId: '', classroomNum: '', courseStrId: '', startYear: 0, group: null}, aClickable=false }) {
   const form = useForm({
     mode:'uncontrolled',
     initialValues: {
@@ -16,7 +16,7 @@ function ScheduleField({ alectureId, aFieldType='C', aClassId, aData={teacherStr
       classId: aClassId, // passed
       teacherId: 0, // from useEffect on strID
       subjectId: 0, // from nativeselect
-      classroomId: 0, // 
+      classroomId: 0, // Building + classnum select
       FullOrAB: 'F' // Maybe will come from props
     }
   })
@@ -50,6 +50,7 @@ function ScheduleField({ alectureId, aFieldType='C', aClassId, aData={teacherStr
   }, [teacherStrId])
 
   useEffect( () => {
+    if (!aClickable) return;
     axios.get(process.env.REACT_APP_BE_ADDR+'/getSubjectsExpertiseForTeacher', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'teacherId': form.getValues().teacherId}}).then(
       (resp) => {
         if (resp.data.status === 200) {
@@ -63,6 +64,7 @@ function ScheduleField({ alectureId, aFieldType='C', aClassId, aData={teacherStr
   }, [foundTeacher])
 
   useEffect( () => {
+    if (!aClickable) return;
     axios.get(process.env.REACT_APP_BE_ADDR+'/getBuildings', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
         if (resp.data.status === 200) {
@@ -77,6 +79,7 @@ function ScheduleField({ alectureId, aFieldType='C', aClassId, aData={teacherStr
   }, [])
 
   useEffect( () => {
+    if (!aClickable) return;
     axios.get(process.env.REACT_APP_BE_ADDR+'/getClassroomId', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'buildingId': buildingId, 'classroomNumber': classroomNumber}}).then(
       (resp) => {
         if (resp.data.status === 200) {
@@ -104,11 +107,13 @@ function ScheduleField({ alectureId, aFieldType='C', aClassId, aData={teacherStr
   }
 
   const paperField = (
-  <Paper shadow='md' p='sm' withBorder>
+  <Paper shadow='md' p='sm' withBorder  w={100} h={200}>
     <Center><Stack gap={7}>
+      { (aFieldType === 'E') ? (<></>) : <>
       <Text size='xl'>{data.subjectStrID}</Text>
       <Text size='xs'>{(aFieldType !== 'R') ? (data.buildingStrId+data.classroomNum) : constructClassId(data.courseStrId, data.startYear, data.group)}</Text>
-      <Text size='xs'>{(aFieldType !== 'T') ? (data.teacherStrId) : constructClassId(data.courseStrId, data.startYear, data.group)}</Text>
+      <Text size='xs'>{(aFieldType !== 'T') ? (data.teacherStrId) : constructClassId(data.courseStrId, data.startYear, data.group)}</Text></>
+      }
     </Stack></Center>
   </Paper>)
 
