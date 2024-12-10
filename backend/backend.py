@@ -397,7 +397,7 @@ def flask_createClass():
     startYear = request.json['startYear']
     rootClassroomId = request.json['rootClassroomId']
     classTeacherId = request.json['classTeacherId']
-    groupNumber = request.json['groupNumber'] if request.json['groupNumber'] in (1, 2) else None
+    groupNumber = request.json['groupNumber']
     code = dbHandler.addClass(courseId, startYear, rootClassroomId, classTeacherId, groupNumber)
     if code == 0: return {'status': 200}
     msg = ''

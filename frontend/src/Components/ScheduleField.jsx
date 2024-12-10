@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks';
-import { Stack, Button, Modal, Paper, Center, Text, Menu, TextInput, NativeSelect, NumberInput } from '@mantine/core';
+import { Stack, Button, Modal, Paper, Center, Text, Menu, TextInput, NativeSelect, NumberInput, Title, Group } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
-import { constructClassId } from '../Components/Util.jsx'
+import { constructClassId, checkNullArray } from '../Components/Util.jsx'
 
 
 // Field type: C for class | T for teachers | R for room | E for empty
@@ -107,7 +107,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aData={teacherStr
   }
 
   const paperField = (
-  <Paper shadow='md' p='sm' withBorder  w={100} h={200}>
+  <Paper shadow='md' p='sm' withBorder  w={70} h={100}>
     <Center><Stack gap={7}>
       { (aFieldType === 'E') ? (<></>) : <>
       <Text size='xl'>{data.subjectStrID}</Text>
