@@ -38,7 +38,7 @@ function LectureTimeField({ alectureId, alectureTime=0, aClickable=false }) {
     <Paper onClick={(aClickable) ? setModalDisclosure.open : ()=>{}} shadow='md' p='sm'>
       <Center><Stack gap={7}>
         <Text>{alectureId}</Text>
-        <Text>{stampToTime(lectureTime)} - {stampToTime(lectureTime+45)}</Text>
+        <Text>{stampToTime(lectureTime)} - {(lectureTime!==0) ? stampToTime(lectureTime+45) : ''}</Text>
       </Stack></Center>
     </Paper>
     <Modal opened={modalDisclosure} onClose={setModalDisclosure.close} title="Lecture" p="xl">

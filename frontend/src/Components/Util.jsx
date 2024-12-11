@@ -10,5 +10,6 @@ export function constructClassId(course, year, group) {
 }
 
 export function stampToTime(timestamp) {
-  return Math.floor(timestamp/60) + ':' + timestamp%60
+  let hours=Math.floor(timestamp/60).toString(), mins=(timestamp%60).toString()
+  return hours + ':' + (mins.length === 1 ? '0' : '') + mins
 }
