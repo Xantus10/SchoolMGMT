@@ -31,8 +31,8 @@ function AddSchedule() {
     <Title order={2}>Add schedule</Title>
     <Stack w={'max-content'} gap={7}>
       <NativeSelect label="Class" data={classesList} value={classId} onChange={(e) => setClassId(e.target.value)} />
-      <Schedule aFieldType='C' aIdToFetch={classId} />
     </Stack>
+    <Schedule aFieldType='C' aIdToFetch={classId} aEditable />
     </>
   );
 }

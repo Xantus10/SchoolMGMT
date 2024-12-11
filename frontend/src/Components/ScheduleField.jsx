@@ -8,7 +8,7 @@ import { constructClassId, checkNullArray } from '../Components/Util.jsx'
 
 
 // Field type: C for class | T for teachers | R for room | E for empty
-function ScheduleField({ alectureId, aFieldType='E', aClassId, aData={teacherStrId: '', subjectStrID: '', buildingStrId: '', classroomNum: '', courseStrId: '', startYear: 0, group: null}, aClickable=false }) {
+function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, aData={teacherStrId: '', subjectStrID: '', buildingStrId: '', classroomNum: '', courseStrId: '', startYear: 0, group: null}, aClickable=false }) {
   const form = useForm({
     mode:'uncontrolled',
     initialValues: {
@@ -30,12 +30,11 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aData={teacherStr
   const [teacherSubjects, setTeacherSubjects] = useState([])
 
   const [buildingId, setBuildingId] = useState(0)
-  const [buildingsList, setBuildingsList] = useState([])
   const [classroomNumber, setClassroomNumber] = useState(0)
   const [foundClassroom, setFoundClassroom] = useState(<></>)
 
   useEffect( () => {
-    if (!aClickable) return;
+    if (!aClickable || !modalDisclosure) return;
     axios.get(process.env.REACT_APP_BE_ADDR+'/getTeacherByStrId', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'strId': teacherStrId}}).then(
       (resp) => {
         if (resp.data.status === 200) {
@@ -50,7 +49,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aData={teacherStr
   }, [teacherStrId])
 
   useEffect( () => {
-    if (!aClickable) return;
+    if (!aClickable || form.getValues().teacherId===0) return;
     axios.get(process.env.REACT_APP_BE_ADDR+'/getSubjectsExpertiseForTeacher', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'teacherId': form.getValues().teacherId}}).then(
       (resp) => {
         if (resp.data.status === 200) {
@@ -64,22 +63,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aData={teacherStr
   }, [foundTeacher])
 
   useEffect( () => {
-    if (!aClickable) return;
-    axios.get(process.env.REACT_APP_BE_ADDR+'/getBuildings', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
-      (resp) => {
-        if (resp.data.status === 200) {
-          if (checkNullArray(resp.data.buildings)) return;
-          setBuildingsList(resp.data.buildings.map(building => ({label: `${building[1]} [${building[2]}]`, value: building[0]})));
-          setBuildingId(resp.data.buildings[0][0])
-        } else {
-          GetNotification(resp.data)
-        }
-      }
-    )
-  }, [])
-
-  useEffect( () => {
-    if (!aClickable) return;
+    if (!aClickable || !modalDisclosure) return;
     axios.get(process.env.REACT_APP_BE_ADDR+'/getClassroomId', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {'buildingId': buildingId, 'classroomNumber': classroomNumber}}).then(
       (resp) => {
         if (resp.data.status === 200) {
@@ -92,6 +76,8 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aData={teacherStr
       }
     )
   }, [buildingId, classroomNumber])
+
+  useEffect( () => {if (!checkNullArray(aBuildingsList)) setBuildingId(aBuildingsList[0][0])}, [aBuildingsList])
 
   function createSchedule() {
     if (form.validate().hasErrors) {
@@ -141,7 +127,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aData={teacherStr
     <NativeSelect data={teacherSubjects} label="Select subject" />
     <Title order={5}>Classroom</Title>
       <Group>
-      <NativeSelect label='Select building' data={buildingsList} value={buildingId} onChange={e => setBuildingId(e.target.value)} />
+      <NativeSelect label='Select building' data={aBuildingsList} value={buildingId} onChange={e => setBuildingId(e.target.value)} />
       <NumberInput label="Classroom number" value={classroomNumber} onChange={setClassroomNumber} />
       </Group>
       <Paper shadow="xs" radius="xl" withBorder p="md">

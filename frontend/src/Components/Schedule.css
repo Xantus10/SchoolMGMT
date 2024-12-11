@@ -1,0 +1,12 @@
+.grid-container {
+  min-width: 900px;
+  display: grid;
+}
+
+.grid-cell {
+  border: 1px black solid;
+  border-collapse: collapse;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
