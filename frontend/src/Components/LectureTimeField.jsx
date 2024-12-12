@@ -41,7 +41,7 @@ function LectureTimeField({ alectureId, alectureTime=0, aClickable=false }) {
         <Text>{stampToTime(lectureTime)} - {(lectureTime!==0) ? stampToTime(lectureTime+45) : ''}</Text>
       </Stack></Center>
     </Paper>
-    <Modal opened={modalDisclosure} onClose={setModalDisclosure.close} title="Lecture" p="xl">
+    <Modal opened={modalDisclosure} onClose={setModalDisclosure.close} title="Lecture">
       <TimeInput label="Start time of the lecture" key={form.key('time')} {...form.getInputProps('time')} />
       <Button onClick={createLectureTime}>Create!</Button>
     </Modal>

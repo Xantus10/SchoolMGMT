@@ -119,7 +119,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
       </Menu.Item>
     </Menu.Dropdown>
   </Menu>
-  <Modal opened={modalDisclosure} onClose={setModalDisclosure.close} title="Schedule Field" p="xl">
+  <Modal opened={modalDisclosure} onClose={setModalDisclosure.close} title="Schedule Field">
     <TextInput label='Teacher StrID' value={teacherStrId} onChange={e => setTeacherStrId(e.target.value)} />
     <Paper shadow="xs" radius="xl" withBorder p="md">
       {foundTeacher}
