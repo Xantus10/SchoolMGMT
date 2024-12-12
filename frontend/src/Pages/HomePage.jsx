@@ -68,19 +68,19 @@ function HomePage() {
   return (
     <>
     <Stack h={"100vh"}>
-      <Box h={"10vh"} bg={"cyan.6"} p={20}>
+      <Box flex={2} bg={"cyan.6"} p={20}>
         <Group>
           <Title c={"gray.0"}>SchoolMGMT</Title>
           <Button bg={'red.9'} ml="auto" onClick={logout}>Logout</Button>
         </Group>
       </Box>
-      <Box h={"5vh"} bg={'cyan.2'} pl={10}>
+      <Box flex={1} bg={'cyan.2'} pl={10}>
         {moduleBar}
       </Box>
-      <Box h={"80vh"} p={20}>
+      <Box flex={16} p={20}>
         {content}
       </Box>
-      <Box h={"5vh"}>
+      <Box flex={1} pb={30}>
         <Group justify="space-around">
           <Text size='sm'>SchoolMGMT</Text>
           <Text size='sm'>2024</Text>
