@@ -19,6 +19,7 @@ function AddSchedule() {
           let now = new Date()
           now.setMonth(now.getMonth()-8)
           setClassesList(resp.data.classes.map(c => ({label: constructClassId(c[1], c[2], c[3]), value: c[0]})));
+          setClassId(resp.data.classes[0][0])
         } else {
           GetNotification(resp.data)
         }

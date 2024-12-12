@@ -621,6 +621,20 @@ def flask_getDays():
   days = dbHandler.getAllDaysInWeek()
   return {'status': 200, 'days': days}
 
+@app.route('/getLectures')
+def flask_getLectures():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  lectures = dbHandler.getAllLectures()
+  return {'status': 200, 'lectures': lectures}
+
 @app.route('/createSchedule', methods=['POST'])
 def flask_createSchedule():
   if request.method == 'POST':
@@ -647,11 +661,35 @@ def flask_createSchedule():
         msg = 'Insert failed, make sure, that\nTeacher isn\'t occupied or\nClassroom isn\'t occupied'
       case dbHandler.ERR_CHECK:
         msg = 'Invalid division modifier'
+      case dbHandler.ERR_FK:
+        msg = 'Error, check if provided values are in database'
       case _:
         msg = f'Undefined database error, please report this issue with date: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")} and code: {code}'
     return {'status': 500, 'msg': msg}
   return {'status': 401}
 
+@app.route('/getSchedule')
+def flask_getSchedule():
+  JWT_token = request.cookies.get('JWT_token')
+  JWT_user_context = request.cookies.get('JWT_user_context')
+  isValid, data = jwt.jwtdecode(JWT_token, JWT_user_context)
+  if not isValid:
+    resp = make_response({'status': 401})
+    resp.delete_cookie('JWT_token')
+    resp.delete_cookie('JWT_user_context')
+    return resp
+  if data['role'] != 'admin': {'status': 403}
+  forWhat = request.args.get('forWhat')
+  rid = request.args.get('rid')
+  schedule = []
+  match (forWhat):
+    case 'C': # Class
+      schedule = dbHandler.getScheduleForClass(rid)
+    case 'T': # Teacher
+      schedule = dbHandler.getScheduleForTeacher(rid)
+    case 'R': # Room
+      schedule = dbHandler.getScheduleForClassroom(rid)
+  return {'status': 200, 'schedule': schedule}
 
 
 @app.route('/logout', methods=['POST'])

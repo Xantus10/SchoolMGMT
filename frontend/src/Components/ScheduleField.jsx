@@ -55,6 +55,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
         if (resp.data.status === 200) {
           if (checkNullArray(resp.data.subjects)) {setTeacherSubjects([]); return;}
           setTeacherSubjects(resp.data.subjects.map((sub) => ({label: sub[1], value: sub[0]})))
+          form.setFieldValue('subjectId', resp.data.subjects[0][0])
         } else {
           GetNotification(resp.data)
         }
@@ -69,7 +70,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
         if (resp.data.status === 200) {
           if (checkNullArray(resp.data.classroom)) return;
           setFoundClassroom(<Text>Classroom found ({resp.data.classroom[1]})</Text>)
-          form.setFieldValue('rootClassroomId', resp.data.classroom[0])
+          form.setFieldValue('classroomId', resp.data.classroom[0])
         } else {
           GetNotification(resp.data)
         }
@@ -77,7 +78,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
     )
   }, [buildingId, classroomNumber])
 
-  useEffect( () => {if (!checkNullArray(aBuildingsList)) setBuildingId(aBuildingsList[0][0])}, [aBuildingsList])
+  useEffect( () => {if (!checkNullArray(aBuildingsList)) setBuildingId(aBuildingsList[0].value)}, [aBuildingsList])
 
   function createSchedule() {
     if (form.validate().hasErrors) {
@@ -85,7 +86,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
     }
     axios.post(process.env.REACT_APP_BE_ADDR+'/createSchedule', form.getValues(), {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
-        if (resp.data.status === 200) setSchedule();
+        if (resp.data.status === 200); //setSchedule();
         PostNotification(resp.data)
       }
     )
@@ -127,7 +128,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
     <NativeSelect data={teacherSubjects} label="Select subject" />
     <Title order={5}>Classroom</Title>
       <Group>
-      <NativeSelect label='Select building' data={aBuildingsList} value={buildingId} onChange={e => setBuildingId(e.target.value)} />
+      <NativeSelect label='Select building' data={aBuildingsList} value={buildingId} onChange={e => setBuildingId(e.currentTarget.value)} />
       <NumberInput label="Classroom number" value={classroomNumber} onChange={setClassroomNumber} />
       </Group>
       <Paper shadow="xs" radius="xl" withBorder p="md">

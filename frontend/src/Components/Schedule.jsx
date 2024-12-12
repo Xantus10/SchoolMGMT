@@ -14,8 +14,11 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
 
   const [days, setDays] = useState([])
   const [lectureTimes, setLectureTimes] = useState([])
+  const [lectures, setLectures] = useState([])
   const [scheduleFields, setScheduleFields] = useState([])
   const [buildingsList, setBuildingsList] = useState([])
+  const [scheduleData, setScheduleData] = useState([])
+  const [fetchStatus, setFetchStatus] = useState(0)
 
 
   useEffect( () => {
@@ -39,6 +42,16 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
         }
       }
     )
+    axios.get(process.env.REACT_APP_BE_ADDR+'/getLectures', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
+      (resp) => {
+        if (resp.data.status === 200) {
+          if (checkNullArray(resp.data.lectures)) return;
+          setLectures(resp.data.lectures)
+        } else {
+          GetNotification(resp.data)
+        }
+      }
+    )
     if (aEditable) axios.get(process.env.REACT_APP_BE_ADDR+'/getBuildings', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
         if (resp.data.status === 200) {
@@ -49,31 +62,56 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
         }
       }
     )
-    /*axios.get(process.env.REACT_APP_BE_ADDR+'/getSchedule', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
+  }, [])
+
+  useEffect( () => {
+    axios.get(process.env.REACT_APP_BE_ADDR+'/getSchedule', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {forWhat: aFieldType, rid: aIdToFetch}}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          if (checkNullArray(resp.data.times)) return;
-          setLectureTimes(resp.data.times)
+          if (checkNullArray(resp.data.schedule)) return;
+          setScheduleData(resp.data.schedule)
+          setFetchStatus(1)
         } else {
           GetNotification(resp.data)
         }
       }
-    )*/
-  }, [])
+    )
+  }, [aIdToFetch])
+
+  function idForDayTime(d, t) {
+    for (let i=0; i<lectures.length; i++) {
+      if (lectures[i][1]===d && lectures[i][2]===t) return lectures[i][0];
+    }
+  }
 
   useEffect( () => {
-    if (days.length > 0 && lectureTimes.length > 0) {
+    if (days.length > 0 && lectureTimes.length > 0 && lectures.length > 0) {
       const tmp = new Array(days.length);
       for (let i=0; i<days.length; i++) {
         tmp[i] = new Array(lectureTimes.length)
         for (let j=0; j<lectureTimes.length; j++) {
-          tmp[i][j] = <div className='grid-cell'><ScheduleField alectureId={0} aFieldType='E' aClickable aBuildingsList={buildingsList} /></div>
+          tmp[i][j] = <div className='grid-cell'><ScheduleField alectureId={idForDayTime(days[i][0], lectureTimes[j][0])} aFieldType='E' aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} /></div>
         }
       };
       setScheduleFields(tmp)
     }
-  }, [days, lectureTimes])
+  }, [days, lectureTimes, lectures])
 
+  useEffect( () => { // [lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB] DATA IS NOT REPLACED AFTER FETCH WITH AiDtOfETCH
+    if (fetchStatus===0 || scheduleFields.length===0) return;
+    const tmp = scheduleFields
+    if (aFieldType==='C') {
+      scheduleData.forEach((data) => {
+        tmp[data[1]-1][data[2]-1] = <div className='grid-cell'><ScheduleField alectureId={data[0]} aFieldType={aFieldType} aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} aData={{teacherStrId: data[4], subjectStrID: data[5], buildingStrId: data[6], classroomNum: data[7]}} /></div>
+      })
+    } else if (aFieldType==='T') {
+
+    } else if (aFieldType==='R') {
+
+    }
+    setScheduleFields(tmp)
+    setFetchStatus(0)
+  }, [scheduleData, scheduleFields])
 
   return (
     <>

@@ -842,21 +842,15 @@ class DbHandler:
     db.commit()
     return 0
 
-  # [id, day, time, isevenweek]
+  # [id, dayId, timeId, isevenweek]
   def getAllLectures(self) -> list[int, str, datetime.datetime, bool]:
     try:
       
       db = self.getDBConn()
       cursor = db.cursor()
-      lectures = cursor.execute('''SELECT lectures.id, d.name, t.id, t.startTime, lectures.isEvenWeek FROM lectures
-                                                  JOIN daysInWeek d ON lectures.dayId=d.id
-                                                  JOIN lectureTimes t ON lectures.timeId=t.id;''')
+      lectures = cursor.execute('''SELECT id, dayId, timeId, isEvenWeek FROM lectures;''')
       lectures = lectures.fetchall()
       db.commit()
-      for i, lecture in enumerate(lectures):
-        lectures[i] = list(lecture)
-        lectures[i][3] = datetime.datetime.strptime(lectures[i][3], '%Y-%m-%d %H:%M:%S')
-        lectures[i][4] = bool(lectures[i][4])
       return lectures
     except sqlite3.Error as e:
       self.logger.logsqlite('getting all lectures', e)
@@ -874,7 +868,7 @@ class DbHandler:
       cursor = db.cursor()
       cursor.execute('INSERT INTO schedules(lectureId, classId, teacherId, subjectId, classroomId, FullORAB) VALUES(?, ?, ?, ?, ?, ?);', (lectureId, classId, teacherId, subjectId, classroomId, FullORAB))
     except sqlite3.Error as e:
-      self.logger.logsqlite('adding schedule single', e, e.sqlite_errorcode)
+      self.logger.logsqlite('adding schedule single', e, e.sqlite_errorcode, (lectureId, classId, teacherId, subjectId, classroomId, FullORAB))
       db.commit()
       return e.sqlite_errorcode
     except Exception as e:
