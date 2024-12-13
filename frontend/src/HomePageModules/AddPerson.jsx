@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form';
-import { Stack, TextInput, NativeSelect, Button, Group, Title, Text } from '@mantine/core';
+import { Stack, TextInput, NativeSelect, Button, Group, Title } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
 import { checkNullArray } from '../Components/Util';
 

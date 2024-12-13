@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'
-import { Stack, NumberInput, NativeSelect, Button, Group, Title, Text } from '@mantine/core';
+import { Button, Group, Title } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
 import { checkNullArray } from '../Components/Util';
 import LectureTimeField from '../Components/LectureTimeField';

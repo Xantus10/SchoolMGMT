@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form';
-import { Stack, TextInput, Button, Group, Title, Text, PasswordInput } from '@mantine/core';
-import { GetNotification, PostNotification } from '../Components/APINotifications';
+import { Stack, TextInput, Button, Group, Title } from '@mantine/core';
+import { PostNotification } from '../Components/APINotifications';
 
 function AddCourse() {
   const form = useForm({

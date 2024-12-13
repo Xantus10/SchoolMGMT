@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'
 import { useForm } from '@mantine/form';
-import { Stack, MultiSelect, Button, Group, Title, Text, TextInput, Paper, NumberInput } from '@mantine/core';
+import { Stack, MultiSelect, Button, Group, Title, Text, TextInput, Paper } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
 import { checkNullArray } from '../Components/Util.jsx'
 import DisplayTeacherSubjects from '../Components/DisplayTeacherSubjects.jsx';
