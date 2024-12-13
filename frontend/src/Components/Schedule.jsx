@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, cloneElement } from 'react';
 import axios from 'axios'
 import { Stack, MultiSelect, Button, Group, Title, Text, TextInput, Paper, NumberInput } from '@mantine/core';
 import { GetNotification, PostNotification } from '../Components/APINotifications';
@@ -68,9 +68,9 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getSchedule', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {forWhat: aFieldType, rid: aIdToFetch}}).then(
       (resp) => {
         if (resp.data.status === 200) {
+          setFetchStatus((prev) => prev+1)
           if (checkNullArray(resp.data.schedule)) return;
           setScheduleData(resp.data.schedule)
-          setFetchStatus(1)
         } else {
           GetNotification(resp.data)
         }
@@ -94,15 +94,16 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
         }
       };
       setScheduleFields(tmp)
+      setFetchStatus((prev) => prev+1)
     }
   }, [days, lectureTimes, lectures])
 
-  useEffect( () => { // [lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB] DATA IS NOT REPLACED AFTER FETCH WITH AiDtOfETCH
-    if (fetchStatus===0 || scheduleFields.length===0) return;
+  useEffect( () => { // [lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
+    if (fetchStatus<2) return;
     const tmp = scheduleFields
     if (aFieldType==='C') {
       scheduleData.forEach((data) => {
-        tmp[data[1]-1][data[2]-1] = <div className='grid-cell'><ScheduleField alectureId={data[0]} aFieldType={aFieldType} aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} aData={{teacherStrId: data[4], subjectStrID: data[5], buildingStrId: data[6], classroomNum: data[7]}} /></div>
+        tmp[data[1]-1][data[2]] = <div className='grid-cell'><ScheduleField alectureId={data[0]} aFieldType={aFieldType} aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} aData={{teacherStrId: data[4], subjectStrID: data[5], buildingStrId: data[6], classroomNum: data[7]}} /></div>
       })
     } else if (aFieldType==='T') {
 
@@ -110,8 +111,8 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
 
     }
     setScheduleFields(tmp)
-    setFetchStatus(0)
-  }, [scheduleData, scheduleFields])
+    setFetchStatus(1)
+  }, [fetchStatus])
 
   return (
     <>
@@ -119,7 +120,7 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
       <div className='grid-cell'></div>
       {lectureTimes.map((time) => <div className='grid-cell'><LectureTimeField key={time[0]} alectureId={time[0]} alectureTime={time[1]} /></div>)}
       {scheduleFields.map((dayList, i) => {
-        return (<><div className='grid-cell'><Paper>{days[i][1]}</Paper></div>{dayList}</>)
+        return (<><div className='grid-cell'><Paper>{days[i][1]}</Paper></div>{...dayList}</>)
       })}
     </div>
     </>

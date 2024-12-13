@@ -16,12 +16,13 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
       classId: aClassId, // passed
       teacherId: 0, // from useEffect on strID
       subjectId: 0, // from nativeselect
-      classroomId: 0, // Building + classnum select
+      classroomId: 0, // Building + classnum useEffect
       FullOrAB: 'F' // Maybe will come from props
     }
   })
 
   const [modalDisclosure, setModalDisclosure] = useDisclosure(false)
+  const [fieldType, setFieldType] = useState(aFieldType)
   const [data, setData] = useState(aData)
 
   const [teacherStrId, setTeacherStrId] = useState('')
@@ -80,6 +81,9 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
 
   useEffect( () => {if (!checkNullArray(aBuildingsList)) setBuildingId(aBuildingsList[0].value)}, [aBuildingsList])
 
+  useEffect( () => {setFieldType(aFieldType)}, [aFieldType])
+  //useEffect( () => {setData(aData)}, [aData])
+
   function createSchedule() {
     if (form.validate().hasErrors) {
       return
@@ -97,9 +101,9 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
   <Paper shadow='md' p='sm' withBorder  w={70} h={100}>
     <Center><Stack gap={7}>
       { (aFieldType === 'E') ? (<></>) : <>
-      <Text size='xl'>{data.subjectStrID}</Text>
-      <Text size='xs'>{(aFieldType !== 'R') ? (data.buildingStrId+data.classroomNum) : constructClassId(data.courseStrId, data.startYear, data.group)}</Text>
-      <Text size='xs'>{(aFieldType !== 'T') ? (data.teacherStrId) : constructClassId(data.courseStrId, data.startYear, data.group)}</Text></>
+      <Text size='xl'>{aData.subjectStrID}</Text>
+      <Text size='xs'>{(aFieldType !== 'R') ? (aData.buildingStrId+aData.classroomNum) : constructClassId(aData.courseStrId, aData.startYear, aData.group)}</Text>
+      <Text size='xs'>{(aFieldType !== 'T') ? (aData.teacherStrId) : constructClassId(aData.courseStrId, aData.startYear, aData.group)}</Text></>
       }
     </Stack></Center>
   </Paper>)
@@ -125,7 +129,7 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
     <Paper shadow="xs" radius="xl" withBorder p="md">
       {foundTeacher}
     </Paper>
-    <NativeSelect data={teacherSubjects} label="Select subject" />
+    <NativeSelect data={teacherSubjects} label="Select subject" key={form.key('subjectId')} {...form.getInputProps('subjectId')} />
     <Title order={5}>Classroom</Title>
       <Group>
       <NativeSelect label='Select building' data={aBuildingsList} value={buildingId} onChange={e => setBuildingId(e.currentTarget.value)} />
