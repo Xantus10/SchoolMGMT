@@ -76,7 +76,7 @@ def flask_createPerson():
     fname = request.json['firstName'].capitalize()
     lname = request.json['lastName'].capitalize()
     birthNum = int(request.json['birthNumber'].replace('/', ''))
-    roleId = request.json['roleId']
+    roleId = int(request.json['roleId'])
     code = dbHandler.addPerson(birthNum, roleId, fname, lname)
     if code == 0: return {'status': 200}
     msg = ''
@@ -174,7 +174,7 @@ def flask_createClassroom():
     if data['role'] != 'admin': {'status': 403}
     number = request.json['number']
     capacity = request.json['capacity']
-    buildingId = request.json['buildingId']
+    buildingId = int(request.json['buildingId'])
     code = dbHandler.addClassroom(number, capacity, buildingId)
     if code == 0: return {'status': 200}
     msg = ''
@@ -286,8 +286,8 @@ def flask_createEmployee():
       return resp
     if data['role'] != 'admin': {'status': 403}
     personId = request.json['personId']
-    withSupervisor = request.json['withSupervisor']
-    supervisorId = request.json['supervisorId'] if withSupervisor else None
+    withSupervisor = int(request.json['withSupervisor'])
+    supervisorId = int(request.json['supervisorId']) if withSupervisor else None
     code = dbHandler.addEmployee(personId, supervisorId)
     if code == 0: return {'status': 200}
     msg = ''
@@ -331,7 +331,7 @@ def flask_createTeacher():
       resp.delete_cookie('JWT_user_context')
       return resp
     if data['role'] != 'admin': {'status': 403}
-    personId = request.json['personId']
+    personId = int(request.json['personId'])
     strId = request.json['strId']
     strId = strId.upper() if strId else None
     teachingFrom = request.json['teachingFrom']
@@ -397,7 +397,7 @@ def flask_createClass():
     startYear = request.json['startYear']
     rootClassroomId = request.json['rootClassroomId']
     classTeacherId = request.json['classTeacherId']
-    groupNumber = request.json['groupNumber']
+    groupNumber = int(request.json['groupNumber'])
     code = dbHandler.addClass(courseId, startYear, rootClassroomId, classTeacherId, groupNumber)
     if code == 0: return {'status': 200}
     msg = ''
@@ -439,8 +439,8 @@ def flask_createStudent():
       resp.delete_cookie('JWT_user_context')
       return resp
     if data['role'] != 'admin': {'status': 403}
-    personId = request.json['personId']
-    classId = request.json['classId']
+    personId = int(request.json['personId'])
+    classId = int(request.json['classId'])
     half = request.json['half']
     code = dbHandler.addStudent(personId, classId, half)
     if code == 0: return {'status': 200}
