@@ -19,6 +19,7 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
   const [buildingsList, setBuildingsList] = useState([])
   const [scheduleData, setScheduleData] = useState([])
   const [fetchStatus, setFetchStatus] = useState(0)
+  //const [idToFetch, setIdToFetch] = useState(aIdToFetch)
 
 
   useEffect( () => {
@@ -69,7 +70,6 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
       (resp) => {
         if (resp.data.status === 200) {
           setFetchStatus((prev) => prev+1)
-          if (checkNullArray(resp.data.schedule)) return;
           setScheduleData(resp.data.schedule)
         } else {
           GetNotification(resp.data)
@@ -84,23 +84,26 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     }
   }
 
+  function getClearSchedule() {
+    const tmp = new Array(days.length);
+    for (let i=0; i<days.length; i++) {
+      tmp[i] = new Array(lectureTimes.length)
+      for (let j=0; j<lectureTimes.length; j++) {
+        tmp[i][j] = <div className='grid-cell'><ScheduleField alectureId={idForDayTime(days[i][0], lectureTimes[j][0])} aFieldType='E' aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} /></div>
+      }
+    };
+    return tmp
+  }
+
   useEffect( () => {
-    if (days.length > 0 && lectureTimes.length > 0 && lectures.length > 0) {
-      const tmp = new Array(days.length);
-      for (let i=0; i<days.length; i++) {
-        tmp[i] = new Array(lectureTimes.length)
-        for (let j=0; j<lectureTimes.length; j++) {
-          tmp[i][j] = <div className='grid-cell'><ScheduleField alectureId={idForDayTime(days[i][0], lectureTimes[j][0])} aFieldType='E' aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} /></div>
-        }
-      };
-      setScheduleFields(tmp)
-      setFetchStatus((prev) => prev+1)
-    }
+    setFetchStatus((prev) => prev+1)
   }, [days, lectureTimes, lectures])
+
+  
 
   useEffect( () => { // [lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
     if (fetchStatus<2) return;
-    const tmp = scheduleFields
+    const tmp = getClearSchedule()
     if (aFieldType==='C') {
       scheduleData.forEach((data) => {
         tmp[data[1]-1][data[2]] = <div className='grid-cell'><ScheduleField alectureId={data[0]} aFieldType={aFieldType} aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} aData={{teacherStrId: data[4], subjectStrID: data[5], buildingStrId: data[6], classroomNum: data[7]}} /></div>

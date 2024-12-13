@@ -22,8 +22,6 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
   })
 
   const [modalDisclosure, setModalDisclosure] = useDisclosure(false)
-  const [fieldType, setFieldType] = useState(aFieldType)
-  const [data, setData] = useState(aData)
 
   const [teacherStrId, setTeacherStrId] = useState('')
   const [foundTeacher, setFoundTeacher] = useState(<></>)
@@ -81,8 +79,8 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
 
   useEffect( () => {if (!checkNullArray(aBuildingsList)) setBuildingId(aBuildingsList[0].value)}, [aBuildingsList])
 
-  useEffect( () => {setFieldType(aFieldType)}, [aFieldType])
-  //useEffect( () => {setData(aData)}, [aData])
+  useEffect( () => {form.setFieldValue('classId', aClassId)}, [aClassId])
+  useEffect( () => {form.setFieldValue('lectureId', alectureId)}, [alectureId])
 
   function createSchedule() {
     if (form.validate().hasErrors) {
@@ -93,7 +91,9 @@ function ScheduleField({ alectureId, aFieldType='E', aClassId, aBuildingsList, a
         if (resp.data.status === 200); //setSchedule();
         PostNotification(resp.data)
       }
-    )
+    ).catch((rea) => {////////////////////////////////////// For occasional error, check if happens again
+      console.log(form.getValues(), alectureId)
+    })
     setModalDisclosure.close()
   }
 
