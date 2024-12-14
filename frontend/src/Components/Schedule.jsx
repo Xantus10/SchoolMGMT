@@ -11,17 +11,14 @@ import './Schedule.css'
 
 // Field type: C for class | T for teachers | R for room ; aIdToFetch=Id of teacher/class/room
 function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
-
   const [days, setDays] = useState([])
   const [lectureTimes, setLectureTimes] = useState([])
   const [lectures, setLectures] = useState([])
-  const [scheduleFields, setScheduleFields] = useState([])
   const [buildingsList, setBuildingsList] = useState([])
   const [scheduleData, setScheduleData] = useState([])
-  const [fetchStatus, setFetchStatus] = useState(0)
-  //const [idToFetch, setIdToFetch] = useState(aIdToFetch)
+  const [fullScheduleData, setFullScheduleData] = useState([])
 
-
+  // Initial gets
   useEffect( () => {
     axios.get(process.env.REACT_APP_BE_ADDR+'/getDays', {headers: {"Content-Type": "application/json"}, withCredentials: true}).then(
       (resp) => {
@@ -65,11 +62,12 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     )
   }, [])
 
+  // Get schedule when Id changes from last rerender
   useEffect( () => {
+    if (aIdToFetch === 0) return;
     axios.get(process.env.REACT_APP_BE_ADDR+'/getSchedule', {headers: {"Content-Type": "application/json"}, withCredentials: true, params: {forWhat: aFieldType, rid: aIdToFetch}}).then(
       (resp) => {
         if (resp.data.status === 200) {
-          setFetchStatus((prev) => prev+1)
           setScheduleData(resp.data.schedule)
         } else {
           GetNotification(resp.data)
@@ -78,53 +76,47 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     )
   }, [aIdToFetch])
 
+  // Get lectureId for day/time (initial gets HAVE to be notnull)
   function idForDayTime(d, t) {
     for (let i=0; i<lectures.length; i++) {
       if (lectures[i][1]===d && lectures[i][2]===t) return lectures[i][0];
     }
   }
 
-  function getClearSchedule() {
+  function getIxForLectureId(lid) { // [lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
+    for (let i=0; i<scheduleData.length; i++) {
+      if (scheduleData[i][0] === lid) return i;
+    }
+    return -1;
+  }
+
+  // After initial gets and schedule data is (re)fetched call this
+  useEffect( () => {
+    if (days.length===0 || lectureTimes.length===0 || lectures.length===0) return;
     const tmp = new Array(days.length);
     for (let i=0; i<days.length; i++) {
       tmp[i] = new Array(lectureTimes.length)
       for (let j=0; j<lectureTimes.length; j++) {
-        tmp[i][j] = <div className='grid-cell'><ScheduleField alectureId={idForDayTime(days[i][0], lectureTimes[j][0])} aFieldType='E' aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} /></div>
+        let lid = idForDayTime(days[i][0], lectureTimes[j][0])
+        let ix = getIxForLectureId(lid)
+        if (ix !== -1) {
+          tmp[i][j] = [aFieldType, ...scheduleData[ix]]
+        } else {
+          tmp[i][j] = ['E', lid]
+        }
       }
-    };
-    return tmp
-  }
-
-  useEffect( () => {
-    setFetchStatus((prev) => prev+1)
-  }, [days, lectureTimes, lectures])
+    }
+    setFullScheduleData(tmp)
+  }, [days, lectureTimes, lectures, scheduleData])
 
   
-
-  useEffect( () => { // [lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
-    if (fetchStatus<2) return;
-    const tmp = getClearSchedule()
-    if (aFieldType==='C') {
-      scheduleData.forEach((data) => {
-        tmp[data[1]-1][data[2]] = <div className='grid-cell'><ScheduleField alectureId={data[0]} aFieldType={aFieldType} aClickable aBuildingsList={buildingsList} aClassId={aIdToFetch} aData={{teacherStrId: data[4], subjectStrID: data[5], buildingStrId: data[6], classroomNum: data[7]}} /></div>
-      })
-    } else if (aFieldType==='T') {
-
-    } else if (aFieldType==='R') {
-
-    }
-    setScheduleFields(tmp)
-    setFetchStatus(1)
-  }, [fetchStatus])
 
   return (
     <>
     <div className='grid-container' style={{gridTemplateColumns: `repeat(${lectureTimes.length+1}, 1fr)`, gridTemplateRows: `repeat(${days.length+1}, 1fr)`}}>
       <div className='grid-cell'></div>
-      {lectureTimes.map((time) => <div className='grid-cell'><LectureTimeField key={time[0]} alectureId={time[0]} alectureTime={time[1]} /></div>)}
-      {scheduleFields.map((dayList, i) => {
-        return (<><div className='grid-cell'><Paper>{days[i][1]}</Paper></div>{...dayList}</>)
-      })}
+      {lectureTimes.map((time) => <div className='grid-cell' key={time[0]}><LectureTimeField alectureId={time[0]} alectureTime={time[1]} /></div>)}
+      {fullScheduleData.map((day, ix) => {return (<><div key={-1} className='grid-cell'>{days[ix][1]}</div>{...day.map((ldata) => {return (<div className='grid-cell' key={ldata[1]}><ScheduleField aData={ldata} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable /></div>)})}</>)})}
     </div>
     </>
   );
