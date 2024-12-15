@@ -11,7 +11,7 @@ import { constructClassId, checkNullArray } from '../Components/Util.jsx'
 // C: [fieldType, lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
 // T: [fieldType, lectureId, dayId, timeId, evenWeek, courseStrID, classStartYear, classGroupNumber, subjectStrID, buildingStrID, classroomNum, fullOrAB]
 // R: [fieldType, lectureId, dayId, timeId, evenWeek, courseStrID, classStratYear, classGroupNumber, subjectStrID, teacherStrID, fullOrAB]
-function ScheduleField({aClassId, aBuildingsList, aData=[], aClickable=false }) {
+function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleData=()=>{}, aClickable=false }) {
 
   const paperField = (
     <Paper shadow='md' p='sm' withBorder  w={70} h={100}>
@@ -120,9 +120,11 @@ function ScheduleField({aClassId, aBuildingsList, aData=[], aClickable=false }) 
     }
 
     function setSchedule() {
-      //setFieldType('C')
       const vals = form.getValues()
-      //setData({...aData, teacherStrId: teacherStrId, subjectStrID: getLabelByValue(teacherSubjects, vals.subjectId), buildingStrId: getLabelByValue(aBuildingsList, buildingId), classroomNum: classroomNumber})
+      let buildingStr = getLabelByValue(aBuildingsList, buildingId)
+      let s = buildingStr.indexOf('[')
+      let e = buildingStr.indexOf(']')
+      changeFullScheduleData(aData[2]-1, aData[3], ['C', aData[1], aData[2], aData[3], aData[4], teacherStrId, getLabelByValue(teacherSubjects, vals.subjectId), buildingStr.substr(s+1, (e-s-1)), classroomNumber, 'F'])
     }
 
     function createSchedule() {

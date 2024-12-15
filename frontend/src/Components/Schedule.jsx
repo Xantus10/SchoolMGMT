@@ -79,7 +79,7 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
   // Get lectureId for day/time (initial gets HAVE to be notnull)
   function idForDayTime(d, t) {
     for (let i=0; i<lectures.length; i++) {
-      if (lectures[i][1]===d && lectures[i][2]===t) return lectures[i][0];
+      if (lectures[i][1]===d && lectures[i][2]===t) return {lid:lectures[i][0],evenWeek:lectures[i][3]};
     }
   }
 
@@ -90,6 +90,12 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     return -1;
   }
 
+  function changeFullScheduleData(iIx, jIx, data) {
+    const tmp = fullScheduleData.slice();
+    tmp[iIx][jIx] = data;
+    setFullScheduleData(tmp)
+  }
+
   // After initial gets and schedule data is (re)fetched call this
   useEffect( () => {
     if (days.length===0 || lectureTimes.length===0 || lectures.length===0) return;
@@ -97,12 +103,12 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     for (let i=0; i<days.length; i++) {
       tmp[i] = new Array(lectureTimes.length)
       for (let j=0; j<lectureTimes.length; j++) {
-        let lid = idForDayTime(days[i][0], lectureTimes[j][0])
+        let {lid, evenWeek} = idForDayTime(days[i][0], lectureTimes[j][0])
         let ix = getIxForLectureId(lid)
         if (ix !== -1) {
           tmp[i][j] = [aFieldType, ...scheduleData[ix]]
         } else {
-          tmp[i][j] = ['E', lid]
+          tmp[i][j] = ['E', lid, i+1, j, evenWeek]
         }
       }
     }
@@ -116,7 +122,7 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     <div className='grid-container' style={{gridTemplateColumns: `repeat(${lectureTimes.length+1}, 1fr)`, gridTemplateRows: `repeat(${days.length+1}, 1fr)`}}>
       <div className='grid-cell'></div>
       {lectureTimes.map((time) => <div className='grid-cell' key={time[0]}><LectureTimeField alectureId={time[0]} alectureTime={time[1]} /></div>)}
-      {fullScheduleData.map((day, ix) => {return (<><div key={-1} className='grid-cell'>{days[ix][1]}</div>{...day.map((ldata) => {return (<div className='grid-cell' key={ldata[1]}><ScheduleField aData={ldata} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable /></div>)})}</>)})}
+      {fullScheduleData.map((day, ix) => {return (<><div key={-1} className='grid-cell'>{days[ix][1]}</div>{...day.map((ldata) => {return (<div className='grid-cell' key={ldata[1]}><ScheduleField aData={ldata} changeFullScheduleData={changeFullScheduleData} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable /></div>)})}</>)})}
     </div>
     </>
   );
