@@ -11,27 +11,29 @@ import { constructClassId, checkNullArray } from '../Components/Util.jsx'
 // C: [fieldType, lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
 // T: [fieldType, lectureId, dayId, timeId, evenWeek, courseStrID, classStartYear, classGroupNumber, subjectStrID, buildingStrID, classroomNum, fullOrAB]
 // R: [fieldType, lectureId, dayId, timeId, evenWeek, courseStrID, classStratYear, classGroupNumber, subjectStrID, teacherStrID, fullOrAB]
-function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleData=()=>{}, aClickable=false }) {
+function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleData=()=>{}, divide=()=>{}, aClickable=false }) {
+
+  const subjectTextSize = (aData[aData.length-1] === 'F') ? 'xl' : 'sm';
 
   const paperField = (
-    <Paper shadow='md' p='sm' withBorder  w={70} h={100}>
-      <Center><Stack gap={7}>
+    <Paper shadow='md' p={(aData[aData.length-1] === 'F') ? 'sm' : 5} withBorder  w={70} h={(aData[aData.length-1] === 'F') ? 110 : 60}>
+      <Center><Stack gap={(aData[aData.length-1] === 'F') ? 7 : 0}>
         {
           (aData[0] === 'E') ? (<></>) :
           (aData[0] === 'C') ? (<>
-          <Text size='xl'>{aData[6]}</Text>
+          <Text size={subjectTextSize}>{aData[6]}</Text>
           <Text size='xs'>{aData[7]+aData[8]}</Text>
           <Text size='xs'>{aData[5]}</Text>
           </>) :
           (aData[0] === 'T') ? (<>
-            <Text size='xl'>{aData[8]}</Text>
+            <Text size={subjectTextSize}>{aData[8]}</Text>
             <Text size='xs'>{aData[9]+aData[10]}</Text>
-            <Text size='xs'>{constructClassId(aData[5], aData[6], aData[7])}</Text>
+            <Text size='xs'>{constructClassId(aData[5], aData[6], aData[7], aData[aData.length-1])}</Text>
             </>) :
           (aData[0] === 'R') ? (<>
-            <Text size='xl'>{aData[8]}</Text>
+            <Text size={subjectTextSize}>{aData[8]}</Text>
             <Text size='xs'>{aData[9]}</Text>
-            <Text size='xs'>{constructClassId(aData[5], aData[6], aData[7])}</Text>
+            <Text size='xs'>{constructClassId(aData[5], aData[6], aData[7], aData[aData.length-1])}</Text>
             </>) :
           (<></>)
         }
@@ -47,12 +49,13 @@ function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleDa
         teacherId: 0, // from useEffect on strID
         subjectId: 0, // from nativeselect
         classroomId: 0, // Building + classnum passed
-        FullOrAB: 'F' // Maybe will come from props
+        FullOrAB: aData[aData.length-1] // passed
       }
     })
 
     form.setFieldValue('lectureId', aData[1])
     form.setFieldValue('classId', aClassId)
+    form.setFieldValue('FullOrAB', aData[aData.length-1])
 
     const [modalDisclosure, setModalDisclosure] = useDisclosure(false)
 
@@ -119,7 +122,7 @@ function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleDa
       }
     }
 
-    function setSchedule() {
+    function setSchedule() { // ADD HANDLING FOR SPLIT LECTURES - WILL NOT USE CHANGEFULLSCHEDULEDATA, IMPLEMENT NEW METHOD
       const vals = form.getValues()
       let buildingStr = getLabelByValue(aBuildingsList, buildingId)
       let s = buildingStr.indexOf('[')
@@ -149,7 +152,7 @@ function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleDa
         <Menu.Item onClick={setModalDisclosure.open}>
           <Text>Add lecture</Text>
         </Menu.Item>
-        <Menu.Item onClick={()=>{}}>
+        <Menu.Item onClick={()=>{divide(aData[2]-1, aData[3], aData[1], aData[4])}}>
           <Text>Divide</Text>
         </Menu.Item>
       </Menu.Dropdown>

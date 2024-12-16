@@ -1,7 +1,7 @@
 import React, { useState, useEffect, cloneElement } from 'react';
 import axios from 'axios'
 import { Stack, MultiSelect, Button, Group, Title, Text, TextInput, Paper, NumberInput } from '@mantine/core';
-import { GetNotification, PostNotification } from '../Components/APINotifications';
+import { GetNotification, ErrorNotification } from '../Components/APINotifications';
 import { checkNullArray } from '../Components/Util.jsx'
 import ScheduleField from './ScheduleField.jsx';
 import LectureTimeField from './LectureTimeField.jsx'
@@ -84,15 +84,23 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
   }
 
   function getIxForLectureId(lid) { // [lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
+    let arr = new Array()
     for (let i=0; i<scheduleData.length; i++) {
-      if (scheduleData[i][0] === lid) return i;
+      if (scheduleData[i][0] === lid) arr.push(i);
     }
-    return -1;
+    return arr;
   }
 
   function changeFullScheduleData(iIx, jIx, data) {
     const tmp = fullScheduleData.slice();
     tmp[iIx][jIx] = data;
+    setFullScheduleData(tmp)
+  }
+
+  function splitLecture(iIX, jIx, lid, evenWeek) { // Split lecture structure - [fieldType:'S', {'A': [dataforAhalf], 'B': [dataforBhalf]}]
+    if (fullScheduleData[iIX][jIx][0] !== 'E') ErrorNotification('You cannot split non-empty lecture');
+    const tmp = fullScheduleData.slice();
+    tmp[iIX][jIx] = ['S', {A: ['E', lid, iIX+1, jIx, evenWeek, 'A'], B: ['E', lid, iIX+1, jIx, evenWeek, 'B']}]
     setFullScheduleData(tmp)
   }
 
@@ -105,10 +113,25 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
       for (let j=0; j<lectureTimes.length; j++) {
         let {lid, evenWeek} = idForDayTime(days[i][0], lectureTimes[j][0])
         let ix = getIxForLectureId(lid)
-        if (ix !== -1) {
-          tmp[i][j] = [aFieldType, ...scheduleData[ix]]
-        } else {
-          tmp[i][j] = ['E', lid, i+1, j, evenWeek]
+        switch (ix.length) {
+          case 0:
+            tmp[i][j] = ['E', lid, i+1, j, evenWeek, 'F']
+            break;
+          case 1:
+              let half = scheduleData[ix[0]][scheduleData[ix[0]].length-1];
+              let abobj = {}
+              if (half === 'F') {
+                tmp[i][j] = [aFieldType, ...scheduleData[ix[0]]]
+                break;
+              } else if (half === 'A') {
+                tmp[i][j] = ['S', {A: [aFieldType, ...scheduleData[ix[0]]], B: ['E', lid, i+1, j, evenWeek, 'B']}]
+              } else {
+                tmp[i][j] = ['S', {B: [aFieldType, ...scheduleData[ix[0]]], A: ['E', lid, i+1, j, evenWeek, 'A']}]
+              }
+              break;
+          case 2:
+            tmp[i][j] = ['S', {A: [aFieldType, ...scheduleData[ix[0]]], B: [aFieldType, ...scheduleData[ix[1]]]}]
+            break;
         }
       }
     }
@@ -122,7 +145,19 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     <div className='grid-container' style={{gridTemplateColumns: `repeat(${lectureTimes.length+1}, 1fr)`, gridTemplateRows: `repeat(${days.length+1}, 1fr)`}}>
       <div className='grid-cell'></div>
       {lectureTimes.map((time) => <div className='grid-cell' key={time[0]}><LectureTimeField alectureId={time[0]} alectureTime={time[1]} /></div>)}
-      {fullScheduleData.map((day, ix) => {return (<><div key={-1} className='grid-cell'>{days[ix][1]}</div>{...day.map((ldata) => {return (<div className='grid-cell' key={ldata[1]}><ScheduleField aData={ldata} changeFullScheduleData={changeFullScheduleData} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable /></div>)})}</>)})}
+      {fullScheduleData.map((day, ix) => {
+        return (<><div key={-1} className='grid-cell'>{days[ix][1]}</div>{...day.map((ldata) => {
+          if (ldata[0] === 'S') {
+            return (
+              <div className='grid-cell' key={ldata[1]}>
+                <ScheduleField aData={ldata[1].A} changeFullScheduleData={()=>{}} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable />
+                <ScheduleField aData={ldata[1].B} changeFullScheduleData={()=>{}} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable />
+              </div>
+            )
+          }
+          return (<div className='grid-cell' key={ldata[1]}><ScheduleField aData={ldata} changeFullScheduleData={changeFullScheduleData} divide={splitLecture} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable /></div>)
+        })}</>)
+      })}
     </div>
     </>
   );
