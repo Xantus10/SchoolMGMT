@@ -97,6 +97,16 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     setFullScheduleData(tmp)
   }
 
+  function changeHalfScheduleData(iIx, jIx, half, data) {
+    const tmp = fullScheduleData.slice();
+    if (half === 'A') {
+      tmp[iIx][jIx] = ['S', {B: tmp[iIx][jIx][1].B, A: data}];
+    } else {
+      tmp[iIx][jIx] = ['S', {A: tmp[iIx][jIx][1].A, B: data}];
+    }
+    setFullScheduleData(tmp)
+  }
+
   function splitLecture(iIX, jIx, lid, evenWeek) { // Split lecture structure - [fieldType:'S', {'A': [dataforAhalf], 'B': [dataforBhalf]}]
     if (fullScheduleData[iIX][jIx][0] !== 'E') ErrorNotification('You cannot split non-empty lecture');
     const tmp = fullScheduleData.slice();
@@ -119,7 +129,6 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
             break;
           case 1:
               let half = scheduleData[ix[0]][scheduleData[ix[0]].length-1];
-              let abobj = {}
               if (half === 'F') {
                 tmp[i][j] = [aFieldType, ...scheduleData[ix[0]]]
                 break;
@@ -138,20 +147,20 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
     setFullScheduleData(tmp)
   }, [days, lectureTimes, lectures, scheduleData])
 
-  
 
   return (
     <>
     <div className='grid-container' style={{gridTemplateColumns: `repeat(${lectureTimes.length+1}, 1fr)`, gridTemplateRows: `repeat(${days.length+1}, 1fr)`}}>
-      <div className='grid-cell'></div>
-      {lectureTimes.map((time) => <div className='grid-cell' key={time[0]}><LectureTimeField alectureId={time[0]} alectureTime={time[1]} /></div>)}
+      <div className='grid-cell' key={-100}></div>
+      {lectureTimes.map((time) => <div className='grid-cell' key={-time[0]-days.length}><LectureTimeField alectureId={time[0]} alectureTime={time[1]} /></div>)}
       {fullScheduleData.map((day, ix) => {
-        return (<><div key={-1} className='grid-cell'>{days[ix][1]}</div>{...day.map((ldata) => {
+        return (<><div className='grid-cell' key={-days[ix][0]}>{days[ix][1]}</div>{...day.map((ldata) => {
           if (ldata[0] === 'S') {
+            console.log(fullScheduleData, ldata)
             return (
-              <div className='grid-cell' key={ldata[1]}>
-                <ScheduleField aData={ldata[1].A} changeFullScheduleData={()=>{}} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable />
-                <ScheduleField aData={ldata[1].B} changeFullScheduleData={()=>{}} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable />
+              <div className='grid-cell' key={ldata[1].A[1]}>
+                <ScheduleField aData={ldata[1].A} changeHalfScheduleData={changeHalfScheduleData} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable />
+                <ScheduleField aData={ldata[1].B} changeHalfScheduleData={changeHalfScheduleData} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable />
               </div>
             )
           }

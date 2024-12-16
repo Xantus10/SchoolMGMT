@@ -11,7 +11,7 @@ import { constructClassId, checkNullArray } from '../Components/Util.jsx'
 // C: [fieldType, lectureId, dayId, timeId, evenWeek, teacherStrID, subjectStrID, buildingStrID, classroomNum, fullOrAB]
 // T: [fieldType, lectureId, dayId, timeId, evenWeek, courseStrID, classStartYear, classGroupNumber, subjectStrID, buildingStrID, classroomNum, fullOrAB]
 // R: [fieldType, lectureId, dayId, timeId, evenWeek, courseStrID, classStratYear, classGroupNumber, subjectStrID, teacherStrID, fullOrAB]
-function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleData=()=>{}, divide=()=>{}, aClickable=false }) {
+function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleData=()=>{}, changeHalfScheduleData=()=>{}, divide=()=>{}, aClickable=false }) {
 
   const subjectTextSize = (aData[aData.length-1] === 'F') ? 'xl' : 'sm';
 
@@ -127,7 +127,11 @@ function ScheduleField({aClassId, aBuildingsList, aData=[], changeFullScheduleDa
       let buildingStr = getLabelByValue(aBuildingsList, buildingId)
       let s = buildingStr.indexOf('[')
       let e = buildingStr.indexOf(']')
-      changeFullScheduleData(aData[2]-1, aData[3], ['C', aData[1], aData[2], aData[3], aData[4], teacherStrId, getLabelByValue(teacherSubjects, vals.subjectId), buildingStr.substr(s+1, (e-s-1)), classroomNumber, 'F'])
+      if (aData[aData.length-1] === 'F') {
+        changeFullScheduleData(aData[2]-1, aData[3], ['C', aData[1], aData[2], aData[3], aData[4], teacherStrId, getLabelByValue(teacherSubjects, vals.subjectId), buildingStr.substr(s+1, (e-s-1)), classroomNumber, 'F'])
+      } else {
+        changeHalfScheduleData(aData[2]-1, aData[3], aData[aData.length-1], ['C', aData[1], aData[2], aData[3], aData[4], teacherStrId, getLabelByValue(teacherSubjects, vals.subjectId), buildingStr.substr(s+1, (e-s-1)), classroomNumber, aData[aData.length-1]])
+      }
     }
 
     function createSchedule() {
