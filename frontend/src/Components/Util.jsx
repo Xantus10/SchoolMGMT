@@ -3,10 +3,10 @@ export function checkNullArray(arr) {
   return (!(arr) || arr.length === 0);
 }
 
-export function constructClassId(course, year, group) {
+export function constructClassId(course, year, group, half='F') {
   let now = new Date()
   now.setMonth(now.getMonth()-8)
-  return `${course}${now.getFullYear()-year+1}${(group === 0) ? '' : group}`
+  return `${course}${now.getFullYear()-year+1}${(group === 0) ? '' : group}${(half === 'F') ? '' : half}`
 }
 
 export function stampToTime(timestamp) {
