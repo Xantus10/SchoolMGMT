@@ -61,3 +61,12 @@ export function PostNotification(responseData) {
       break;
   }
 }
+
+export function ErrorNotification(title, msg='') {
+  notifications.show({
+    title: title,
+    message: msg,
+    color: 'red.9',
+    icon: <BiErrorAlt />
+  })
+}
