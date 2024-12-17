@@ -1,6 +1,5 @@
 import React, { useState, useEffect, cloneElement } from 'react';
 import axios from 'axios'
-import { Stack, MultiSelect, Button, Group, Title, Text, TextInput, Paper, NumberInput } from '@mantine/core';
 import { GetNotification, ErrorNotification } from '../Components/APINotifications';
 import { checkNullArray } from '../Components/Util.jsx'
 import ScheduleField from './ScheduleField.jsx';
@@ -156,15 +155,14 @@ function Schedule({ aEditable=false, aFieldType, aIdToFetch }) {
       {fullScheduleData.map((day, ix) => {
         return (<><div className='grid-cell' key={-days[ix][0]}>{days[ix][1]}</div>{...day.map((ldata) => {
           if (ldata[0] === 'S') {
-            console.log(fullScheduleData, ldata)
             return (
               <div className='grid-cell' key={ldata[1].A[1]}>
-                <ScheduleField aData={ldata[1].A} changeHalfScheduleData={changeHalfScheduleData} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable />
-                <ScheduleField aData={ldata[1].B} changeHalfScheduleData={changeHalfScheduleData} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable />
+                <ScheduleField aData={ldata[1].A} changeHalfScheduleData={changeHalfScheduleData} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable={aEditable} />
+                <ScheduleField aData={ldata[1].B} changeHalfScheduleData={changeHalfScheduleData} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable={aEditable} />
               </div>
             )
           }
-          return (<div className='grid-cell' key={ldata[1]}><ScheduleField aData={ldata} changeFullScheduleData={changeFullScheduleData} divide={splitLecture} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable /></div>)
+          return (<div className='grid-cell' key={ldata[1]}><ScheduleField aData={ldata} changeFullScheduleData={changeFullScheduleData} divide={splitLecture} aClassId={aIdToFetch} aBuildingsList={buildingsList} aClickable={aEditable} /></div>)
         })}</>)
       })}
     </div>
