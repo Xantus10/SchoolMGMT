@@ -645,7 +645,7 @@ class DbHandler:
     return 0
 
   # [id, fname, lname, half]
-  def getAllStudentsWithClassHalf(self, classId: int, half: str=None) -> list[int, str, str, str]:
+  def getAllStudentsWithOptClassHalf(self, classId: int, half: str=None) -> list[int, str, str, str]:
     try:
       
       db = self.getDBConn()
@@ -917,9 +917,9 @@ class DbHandler:
       db.commit()
       return schedule
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting schedule for class', e)
+      self.logger.logsqlite('getting schedule for teacher', e)
     except Exception as e:
-      self.logger.logunexpected('getting schedule for class', e)
+      self.logger.logunexpected('getting schedule for teacher', e)
     db.commit()
     return []
 
@@ -940,17 +940,83 @@ class DbHandler:
       db.commit()
       return schedule
     except sqlite3.Error as e:
-      self.logger.logsqlite('getting schedule for class', e)
+      self.logger.logsqlite('getting schedule for classroom', e)
     except Exception as e:
-      self.logger.logunexpected('getting schedule for class', e)
+      self.logger.logunexpected('getting schedule for classroom', e)
+    db.commit()
+    return []
+
+  # Add classification
+  def addClassification(self, weight: float, dateOfMark: datetime.date, title: str, scheduleId: int):
+    try:
+      db = self.getDBConn()
+      cursor = db.cursor()
+      cursor.execute('INSERT INTO classification(weight, date, title, scheduleId) VALUES(?, ?, ?, ?);', (weight, dateOfMark, title, scheduleId))
+    except sqlite3.Error as e:
+      self.logger.logsqlite('adding a classification', e, e.sqlite_errorcode, (weight, dateOfMark, title, scheduleId))
+      db.commit()
+      return e.sqlite_errorcode
+    except Exception as e:
+      self.logger.logunexpected('adding a classification', e)
+    db.commit()
+    return 0
+
+  # [id, weight, date, title, dayId, timeId]
+  def getAllClassificationForClass(self, classId: int):
+    try:
+      
+      db = self.getDBConn()
+      cursor = db.cursor()
+      classification = cursor.execute('''SELECT c.weight, c.date, c.title, l.dayId, l.timeId FROM schedules
+                                    JOIN classification as c ON classification.scheduleId=schedules.id
+                                    JOIN lectures as l ON schedules.lectureId=lectures.id
+                                    WHERE schedules.classId=?;''', (classId,))
+      classification = classification.fetchall()
+      db.commit()
+      return classification
+    except sqlite3.Error as e:
+      self.logger.logsqlite('getting classification for class', e)
+    except Exception as e:
+      self.logger.logunexpected('getting classification for class', e)
     db.commit()
     return []
 
 
+  # Add mark
+  def addStudentMark(self, mark: int, studentId: int, classificationId: int, comment: str=None):
+    try:
+      db = self.getDBConn()
+      cursor = db.cursor()
+      cursor.execute('INSERT INTO studentMarks(mark, studentId, classificationId, comment) VALUES(?, ?, ?, ?);', (mark, studentId, classificationId, comment))
+    except sqlite3.Error as e:
+      self.logger.logsqlite('adding a student mark', e, e.sqlite_errorcode, (mark, studentId, classificationId, comment))
+      db.commit()
+      return e.sqlite_errorcode
+    except Exception as e:
+      self.logger.logunexpected('adding a student mark', e)
+    db.commit()
+    return 0
 
-
-
-
+  # [id, mark, weight, title, comment, date, dayId, timeId]
+  def getAllMarksForStudent(self, studentId: int):
+    try:
+      
+      db = self.getDBConn()
+      cursor = db.cursor()
+      schedule = cursor.execute('''SELECT sm.id, sm.mark, c.weight, c.title, sm.comment, c.date, l.dayId, l.timeId FROM studentMarks as sm
+                                    JOIN classification as c ON c.id=sm.classificationId
+                                    JOIN schedules ON schedules.id=c.scheduleId
+                                    JOIN lectures as l ON l.id=schedules.lectureId
+                                    WHERE sm.studentId=?;''', (studentId,))
+      schedule = schedule.fetchall()
+      db.commit()
+      return schedule
+    except sqlite3.Error as e:
+      self.logger.logsqlite('getting marks for student', e)
+    except Exception as e:
+      self.logger.logunexpected('getting marks for student', e)
+    db.commit()
+    return []
 
 
 
